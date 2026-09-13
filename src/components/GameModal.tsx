@@ -1,15 +1,18 @@
 import React, { useEffect } from 'react';
 import { GameInfo } from '../types';
-import { X, Maximize2, HelpCircle, Terminal } from 'lucide-react';
+import { X, Terminal } from 'lucide-react';
 import { sound } from '../services/audio';
 
-// Import Game Components
+// Import All Game Components
+import { SnakeGame } from '../games/SnakeGame';
+import { TetrisGame } from '../games/TetrisGame';
+import { MemoryMatchGame } from '../games/MemoryMatchGame';
+import { Connect4Game } from '../games/Connect4Game';
+import { SimonGame } from '../games/SimonGame';
+import { WordleGame } from '../games/WordleGame';
+import { AnimePuzzleGame } from '../games/AnimePuzzleGame';
+import { Slide15Game } from '../games/Slide15Game';
 import { Game2048 } from '../games/Game2048';
-import { SudokuGame } from '../games/SudokuGame';
-import { MinesweeperGame } from '../games/MinesweeperGame';
-import { ChimpTestGame } from '../games/ChimpTestGame';
-import { ColorFloodGame } from '../games/ColorFloodGame';
-import { CorsiBlocksGame } from '../games/CorsiBlocksGame';
 
 interface GameModalProps {
   game: GameInfo;
@@ -32,18 +35,24 @@ export const GameModal: React.FC<GameModalProps> = ({ game, onClose, onGameCompl
 
   const renderGame = () => {
     switch (game.id) {
+      case 'snake':
+        return <SnakeGame onComplete={onGameComplete} />;
+      case 'tetris':
+        return <TetrisGame onComplete={onGameComplete} />;
+      case 'memory':
+        return <MemoryMatchGame onComplete={onGameComplete} />;
+      case 'connect4':
+        return <Connect4Game onComplete={onGameComplete} />;
+      case 'simon':
+        return <SimonGame onComplete={onGameComplete} />;
+      case 'wordle':
+        return <WordleGame onComplete={onGameComplete} />;
+      case 'anime':
+        return <AnimePuzzleGame onComplete={onGameComplete} />;
+      case 'slide15':
+        return <Slide15Game onComplete={onGameComplete} />;
       case '2048':
         return <Game2048 onComplete={onGameComplete} />;
-      case 'sudoku':
-        return <SudokuGame onComplete={onGameComplete} />;
-      case 'minesweeper':
-        return <MinesweeperGame onComplete={onGameComplete} />;
-      case 'chimp':
-        return <ChimpTestGame onComplete={onGameComplete} />;
-      case 'flood':
-        return <ColorFloodGame onComplete={onGameComplete} />;
-      case 'corsi':
-        return <CorsiBlocksGame onComplete={onGameComplete} />;
       default:
         return null;
     }
@@ -56,7 +65,7 @@ export const GameModal: React.FC<GameModalProps> = ({ game, onClose, onGameCompl
         {/* Top Control Bar */}
         <div className="flex items-center justify-between px-4 py-3 bg-[#0a0a0a] border-b border-white/[0.08]">
           <div className="flex items-center gap-3">
-            <span className="w-2 h-2 rounded-full bg-amber-400" />
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
             <span className="font-mono text-xs text-white/50 tracking-wider">
               PROTOCOL // {game.number}
             </span>

@@ -1,8 +1,8 @@
-export type GameCategory = 'logic' | 'math' | 'memory' | 'spatial';
+export type GameCategory = 'arcade' | 'logic' | 'memory' | 'puzzle' | 'anime';
 
 export interface GameInfo {
   id: string;
-  number: string; // e.g. "01", "02"
+  number: string;
   title: string;
   subtitle: string;
   category: GameCategory;
@@ -20,7 +20,7 @@ export interface UserStats {
   lastPlayedDate: string;
   totalSolved: number;
   totalTimeMinutes: number;
-  accuracyRate: number; // percentage e.g. 96
-  arcadeRank: string; // e.g. "ARCHITECT // LVL 4"
+  accuracyRate: number;
+  arcadeRank: string;
   scores: Record<string, number>;
 }

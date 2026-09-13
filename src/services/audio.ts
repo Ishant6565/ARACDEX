@@ -1,5 +1,5 @@
 // Zero-latency browser-native Web Audio API synthesizer
-// Generates pristine mechanical clicks, chimes, pops and swooshes in memory
+// Generates pristine mechanical clicks, chimes, pops, thuds and musical chords in memory
 
 class SoundEngine {
   private ctx: AudioContext | null = null;
@@ -52,9 +52,7 @@ class SoundEngine {
 
       osc.start();
       osc.stop(ctx.currentTime + 0.03);
-    } catch {
-      // AudioContext fallback silent
-    }
+    } catch {}
   }
 
   public playSlide(): void {
@@ -80,6 +78,52 @@ class SoundEngine {
     } catch {}
   }
 
+  public playEat(): void {
+    if (!this.enabled) return;
+    try {
+      const ctx = this.getContext();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(400, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.08);
+
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.08);
+    } catch {}
+  }
+
+  public playDrop(): void {
+    if (!this.enabled) return;
+    try {
+      const ctx = this.getContext();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(180, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 0.07);
+
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.07);
+    } catch {}
+  }
+
   public playPop(): void {
     if (!this.enabled) return;
     try {
@@ -90,7 +134,7 @@ class SoundEngine {
 
       osc.type = 'sine';
       osc.frequency.setValueAtTime(600, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(900, ctx.currentTime + 0.05);
+      osc.frequency.exponentialRampToValueAtTime(950, ctx.currentTime + 0.05);
 
       gain.gain.setValueAtTime(0.14, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
@@ -117,7 +161,7 @@ class SoundEngine {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, startTime);
 
-        gain.gain.setValueAtTime(0.1, startTime);
+        gain.gain.setValueAtTime(0.12, startTime);
         gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
 
         osc.connect(gain);
@@ -141,7 +185,7 @@ class SoundEngine {
       osc.frequency.setValueAtTime(140, ctx.currentTime);
       osc.frequency.setValueAtTime(110, ctx.currentTime + 0.08);
 
-      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
 
       osc.connect(gain);
@@ -152,7 +196,7 @@ class SoundEngine {
     } catch {}
   }
 
-  public playNote(frequency: number, duration: number = 0.15): void {
+  public playNote(frequency: number, duration: number = 0.2): void {
     if (!this.enabled) return;
     try {
       const ctx = this.getContext();
@@ -163,7 +207,7 @@ class SoundEngine {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(frequency, ctx.currentTime);
 
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
 
       osc.connect(gain);

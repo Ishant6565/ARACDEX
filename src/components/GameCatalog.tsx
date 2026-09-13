@@ -1,15 +1,159 @@
 import React, { useState } from 'react';
 import { GameCategory, GameInfo } from '../types';
 import { sound } from '../services/audio';
-import { Play, Clock, Award, ArrowUpRight } from 'lucide-react';
+import { Play, Clock, Award, ArrowUpRight, Flame, Sparkles } from 'lucide-react';
 
 export const GAMES_LIST: GameInfo[] = [
   {
-    id: '2048',
+    id: 'snake',
     number: '01',
+    title: 'SNAKE CYBER',
+    subtitle: '60 FPS Reflex Grid',
+    category: 'arcade',
+    difficulty: 'Elementary',
+    estimatedTime: '2-5m',
+    description: 'The legendary arcade classic reimagined in high-contrast brutalist aesthetics. Collect neon food, scale your length, and dominate the matrix.',
+    instructions: [
+      'Use Arrow keys (W,A,S,D) or on-screen D-pad to steer.',
+      'Consume glowing amber nodes to increase score and length.',
+      'Avoid perimeter walls and self-collision.'
+    ],
+    controls: 'ARROWS / WASD / TOUCH CONTROLS',
+    bestScoreKey: 'arcadex_best_snake',
+    badge: 'POPULAR'
+  },
+  {
+    id: 'tetris',
+    number: '02',
+    title: 'TETRIS MONOLITH',
+    subtitle: 'Brutalist Block Matrix',
+    category: 'arcade',
+    difficulty: 'Intermediate',
+    estimatedTime: '5-10m',
+    description: 'Falling geometric tetrominoes with real-time rotation, soft/hard drops, line clearance chords, and progressive speed scaling.',
+    instructions: [
+      'Left/Right arrows to reposition falling block.',
+      'Up arrow / W to rotate.',
+      'Spacebar for instant hard drop, Down arrow for soft drop.',
+      'Complete horizontal lines to clear and score.'
+    ],
+    controls: 'ARROWS + SPACEBAR / BUTTONS',
+    bestScoreKey: 'arcadex_best_tetris',
+    badge: 'CLASSIC'
+  },
+  {
+    id: 'memory',
+    number: '03',
+    title: 'MEMORY GLYPHS',
+    subtitle: '16-Card Spatial Convergence',
+    category: 'memory',
+    difficulty: 'Elementary',
+    estimatedTime: '1-3m',
+    description: 'Clean minimalist card-flip matching. Uncover 8 hidden pairs of geometric emblems with instant audio feedback and dopamine satisfaction.',
+    instructions: [
+      'Click cards to flip and reveal hidden glyph symbols.',
+      'Match identical symbols to lock them open.',
+      'Uncover all 8 pairs in minimum moves and time.'
+    ],
+    controls: 'CLICK / TAP CARDS',
+    bestScoreKey: 'arcadex_best_memory',
+    badge: 'ADDICTIVE'
+  },
+  {
+    id: 'connect4',
+    number: '04',
+    title: 'CONNECT 4',
+    subtitle: 'Tactical 4-In-A-Row vs AI',
+    category: 'logic',
+    difficulty: 'Intermediate',
+    estimatedTime: '3-5m',
+    description: 'Drop amber discs into a 7x6 radial grid against an intelligent AI bot or local 2-player mode. First to connect four wins.',
+    instructions: [
+      'Click any column to drop a disc into the lowest available slot.',
+      'Connect 4 discs horizontally, vertically, or diagonally.',
+      'Toggle VS AI or VS 2-Player anytime.'
+    ],
+    controls: 'COLUMN CLICK / TAP',
+    bestScoreKey: 'arcadex_best_connect4'
+  },
+  {
+    id: 'simon',
+    number: '05',
+    title: 'SIMON RHYTHM',
+    subtitle: 'Harmonic Audio Sequence',
+    category: 'memory',
+    difficulty: 'Intermediate',
+    estimatedTime: '2-4m',
+    description: '4 luminous quadrants pulsing with real musical oscillator chords. Observe, listen, and repeat the escalating sequence.',
+    instructions: [
+      'Watch and listen as colored quadrants blink in sequence.',
+      'Repeat the exact sequence by tapping the pads.',
+      'Sequence length grows by 1 note every round.'
+    ],
+    controls: 'PAD TAPPING',
+    bestScoreKey: 'arcadex_best_simon',
+    badge: 'AUDIO SYNTH'
+  },
+  {
+    id: 'wordle',
+    number: '06',
+    title: 'WORDLE CIPHER',
+    subtitle: '5-Letter Decryption Challenge',
+    category: 'logic',
+    difficulty: 'Intermediate',
+    estimatedTime: '2-4m',
+    description: 'Guess the hidden 5-letter password in 6 attempts. Color-coded feedback indicates exact positions and letter presence.',
+    instructions: [
+      'Enter any 5-letter word guess.',
+      'Green = correct letter in exact slot.',
+      'Amber = letter exists in word, different slot.',
+      'Gray = letter not present in word.'
+    ],
+    controls: 'QWERTY KEYBOARD / ON-SCREEN KEYS',
+    bestScoreKey: 'arcadex_best_wordle',
+    badge: 'DAILY'
+  },
+  {
+    id: 'anime',
+    number: '07',
+    title: 'ANIME JIGSAW',
+    subtitle: 'Legendary Runes & Crests',
+    category: 'anime',
+    difficulty: 'Master',
+    estimatedTime: '3-6m',
+    description: 'Slide fragmented character runes to reconstruct iconic anime titans: Gojo, Itachi, Zoro, Levi, and Goku with custom color accents.',
+    instructions: [
+      'Select your anime character from the top pills.',
+      'Click adjacent rune tiles to slide them into the empty slot.',
+      'Restore all 8 character runes in sequence 1 to 8.'
+    ],
+    controls: 'TILE CLICK / SLIDE',
+    bestScoreKey: 'arcadex_best_anime',
+    badge: 'ANIME SPECIAL'
+  },
+  {
+    id: 'slide15',
+    number: '08',
+    title: '15-PUZZLE CLASSIC',
+    subtitle: 'Solvable Sliding Matrix',
+    category: 'puzzle',
+    difficulty: 'Intermediate',
+    estimatedTime: '3-8m',
+    description: 'The definitive sliding tile math puzzle. 15 numbered slabs randomly scrambled in a 4x4 tray. Slide them back into ascending order.',
+    instructions: [
+      'Click tiles next to the empty slot to slide them.',
+      'Arrange numbers 1 to 15 in left-to-right rows.',
+      'Track your move count and completion timer.'
+    ],
+    controls: 'CLICK / SLIDE TILES',
+    bestScoreKey: 'arcadex_best_slide15'
+  },
+  {
+    id: '2048',
+    number: '09',
     title: '2048 SYNTH',
     subtitle: 'Exponential Number Merging',
-    category: 'math',
+    category: 'logic',
     difficulty: 'Intermediate',
     estimatedTime: '5-10m',
     description: 'Slide matching tiles to compound values until the coveted 2048 monolith converges. Keyboard arrow keys or touch swipe enabled.',
@@ -19,94 +163,7 @@ export const GAMES_LIST: GameInfo[] = [
       'Reach the 2048 tile to complete the protocol.'
     ],
     controls: 'ARROWS / WASD / TOUCH SWIPE',
-    bestScoreKey: 'arcadex_best_2048',
-    badge: 'POPULAR'
-  },
-  {
-    id: 'sudoku',
-    number: '02',
-    title: 'SUDOKU CLASSIC',
-    subtitle: 'Pure 9x9 Deductive Logic',
-    category: 'logic',
-    difficulty: 'Master',
-    estimatedTime: '10-15m',
-    description: 'A minimalist 9x9 grid with cell highlighting, pencil candidate mode, and conflict detection. Pure deductive clarity.',
-    instructions: [
-      'Fill the 9x9 grid so every row, column, and 3x3 box contains digits 1-9.',
-      'Toggle pencil mode to annotate possible candidates.',
-      'Avoid conflicting duplicate entries.'
-    ],
-    controls: 'NUMBER KEYS 1-9 / ON-SCREEN PAD',
-    bestScoreKey: 'arcadex_best_sudoku'
-  },
-  {
-    id: 'minesweeper',
-    number: '03',
-    title: 'MINESWEEPER RADAR',
-    subtitle: 'Sector Hazard Demining',
-    category: 'logic',
-    difficulty: 'Intermediate',
-    estimatedTime: '3-7m',
-    description: 'First-click safe radar sweep. Uncover tiles, identify numbered threat vectors, and flag active ordnance.',
-    instructions: [
-      'Click cells to reveal neighbor hazard counts.',
-      'Right-click or toggle Flag Mode to pin unexploded mines.',
-      'Clear all non-mine sectors to win.'
-    ],
-    controls: 'LEFT CLICK (DIG) / RIGHT CLICK (FLAG)',
-    bestScoreKey: 'arcadex_best_minesweeper'
-  },
-  {
-    id: 'chimp',
-    number: '04',
-    title: 'AYUMU CHIMP TEST',
-    subtitle: 'Primate Working Memory Span',
-    category: 'memory',
-    difficulty: 'Master',
-    estimatedTime: '2-4m',
-    description: 'Based on the famous Kyoto University working memory benchmark. Memorize the scatter of numbers before they mask into blank obsidian slabs.',
-    instructions: [
-      'Observe the positions of numbers 1 through N.',
-      'Clicking 1 masks all remaining tiles.',
-      'Recall and click the rest in ascending order without mistake.'
-    ],
-    controls: 'RAPID CLICK / TAP',
-    bestScoreKey: 'arcadex_best_chimp',
-    badge: 'BENCHMARK'
-  },
-  {
-    id: 'flood',
-    number: '05',
-    title: 'COLOR FLOOD',
-    subtitle: 'Chromatic Territorial Convergence',
-    category: 'logic',
-    difficulty: 'Elementary',
-    estimatedTime: '1-3m',
-    description: 'Fill the matrix with a single unified hue within 22 turns. Highly addictive topological cascade algorithm.',
-    instructions: [
-      'Start from the top-left origin cell.',
-      'Select a palette color to absorb all adjacent cells of that color.',
-      'Achieve 100% board dominance within the quota.'
-    ],
-    controls: 'PALETTE PICKER',
-    bestScoreKey: 'arcadex_best_flood'
-  },
-  {
-    id: 'corsi',
-    number: '06',
-    title: 'CORSI SPATIAL SPAN',
-    subtitle: 'Neuropsychological Sequence Test',
-    category: 'spatial',
-    difficulty: 'Grandmaster',
-    estimatedTime: '3-5m',
-    description: 'A clinical spatial span test where geometric blocks light up with acoustic harmonic frequencies. Replicate the exact spatial trajectory.',
-    instructions: [
-      'Watch and listen as blocks pulse in an audio-spatial sequence.',
-      'Replicate the exact sequence of blocks by tapping them.',
-      'Sequence length increases with each successful round.'
-    ],
-    controls: 'BLOCK TAPPING',
-    bestScoreKey: 'arcadex_best_corsi'
+    bestScoreKey: 'arcadex_best_2048'
   },
 ];
 
@@ -133,11 +190,12 @@ export const GameCatalog: React.FC<{ onSelectGame: (game: GameInfo) => void }> =
         {/* Category Tabs */}
         <div className="flex flex-wrap gap-1.5 font-mono text-xs">
           {[
-            { id: 'all', label: 'ALL (06)' },
-            { id: 'logic', label: '01 LOGIC' },
-            { id: 'math', label: '02 MATH' },
-            { id: 'memory', label: '03 MEMORY' },
-            { id: 'spatial', label: '04 SPATIAL' },
+            { id: 'all', label: 'ALL (09)' },
+            { id: 'arcade', label: 'ARCADE' },
+            { id: 'logic', label: 'LOGIC & STRATEGY' },
+            { id: 'memory', label: 'MEMORY & AUDIO' },
+            { id: 'anime', label: 'ANIME' },
+            { id: 'puzzle', label: 'PUZZLES' },
           ].map(tab => (
             <button
               key={tab.id}
@@ -170,7 +228,11 @@ export const GameCatalog: React.FC<{ onSelectGame: (game: GameInfo) => void }> =
                 <span className="tracking-widest">PROTOCOL {game.number}</span>
                 <div className="flex items-center gap-2">
                   {game.badge && (
-                    <span className="px-1.5 py-0.5 bg-amber-400/10 border border-amber-400/30 text-amber-300 rounded-[1px]">
+                    <span className={`px-1.5 py-0.5 border rounded-[1px] font-bold ${
+                      game.badge.includes('ANIME')
+                        ? 'bg-indigo-500/20 border-indigo-400/50 text-indigo-300'
+                        : 'bg-amber-400/10 border-amber-400/30 text-amber-300'
+                    }`}>
                       {game.badge}
                     </span>
                   )}
