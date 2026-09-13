@@ -5,4 +5,8 @@ dist
 scratch/
 *.db
 *.tsbuildinfo
+.gradle
+android/.gradle
+android/build
+android/app/build
 
