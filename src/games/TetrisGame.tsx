@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { sound } from '../services/audio';
 import { recordGameWin } from '../services/storage';
-import { RotateCcw, Play, Pause, ArrowDown, ArrowLeft, ArrowRight, RotateCw, ChevronDown } from 'lucide-react';
+import { RotateCcw, Play, Pause, ArrowDown, ArrowLeft, ArrowRight, RotateCw, Zap } from 'lucide-react';
 
 const COLS = 10;
 const ROWS = 20;
 
-// Tetromino definitions
 const TETROMINOES: Record<string, { shape: number[][]; color: string }> = {
   I: { shape: [[1, 1, 1, 1]], color: '#38bdf8' },
   O: { shape: [[1, 1], [1, 1]], color: '#fbbf24' },
@@ -34,6 +33,16 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
   const [level, setLevel] = useState<number>(1);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
+
+  // Keep references to prevent stale closures
+  const gridRef = useRef<string[][]>(grid);
+  gridRef.current = grid;
+  const pieceRef = useRef<Piece | null>(currentPiece);
+  pieceRef.current = currentPiece;
+  const isGameOverRef = useRef(isGameOver);
+  isGameOverRef.current = isGameOver;
+  const isPausedRef = useRef(isPaused);
+  isPausedRef.current = isPaused;
 
   const getRandomPiece = (): Piece => {
     const keys = Object.keys(TETROMINOES);
@@ -75,33 +84,18 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
     return rotated;
   };
 
-  const resetGame = useCallback(() => {
-    sound.playClick();
-    setGrid(Array(ROWS).fill(null).map(() => Array(COLS).fill('')));
-    setCurrentPiece(getRandomPiece());
-    setScore(0);
-    setLines(0);
-    setLevel(1);
-    setIsGameOver(false);
-    setIsPaused(false);
-  }, []);
-
-  useEffect(() => {
-    resetGame();
-  }, [resetGame]);
-
-  const mergePiece = useCallback(() => {
-    if (!currentPiece) return;
+  // Synchronous atomic lock function (Zero lag, zero race conditions)
+  const lockPieceAndAdvance = useCallback((pieceToLock: Piece, currentGrid: string[][]) => {
     sound.playDrop();
 
-    const newGrid = grid.map(row => [...row]);
-    currentPiece.shape.forEach((row, r) => {
+    const newGrid = currentGrid.map(row => [...row]);
+    pieceToLock.shape.forEach((row, r) => {
       row.forEach((val, c) => {
         if (val !== 0) {
-          const py = currentPiece.y + r;
-          const px = currentPiece.x + c;
+          const py = pieceToLock.y + r;
+          const px = pieceToLock.x + c;
           if (py >= 0 && py < ROWS && px >= 0 && px < COLS) {
-            newGrid[py][px] = currentPiece.color;
+            newGrid[py][px] = pieceToLock.color;
           }
         }
       });
@@ -122,94 +116,136 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
     if (clearedLines > 0) {
       sound.playSuccess();
       const points = [0, 100, 300, 500, 800][clearedLines] * level;
-      const newScore = score + points;
-      const newLines = lines + clearedLines;
-      const newLevel = Math.floor(newLines / 10) + 1;
-
-      setScore(newScore);
-      setLines(newLines);
-      setLevel(newLevel);
-      recordGameWin('tetris', newScore);
-      onComplete?.(newScore);
+      setScore(s => {
+        const newScore = s + points;
+        recordGameWin('tetris', newScore);
+        onComplete?.(newScore);
+        return newScore;
+      });
+      setLines(l => {
+        const newLines = l + clearedLines;
+        setLevel(Math.floor(newLines / 10) + 1);
+        return newLines;
+      });
     }
 
     setGrid(filteredGrid);
+    gridRef.current = filteredGrid;
 
     const nextPiece = getRandomPiece();
     if (checkCollision(nextPiece, filteredGrid)) {
       sound.playError();
       setIsGameOver(true);
+      setCurrentPiece(null);
     } else {
       setCurrentPiece(nextPiece);
     }
-  }, [currentPiece, grid, score, lines, level, onComplete]);
+  }, [level, onComplete]);
 
-  // Down tick timer
+  // Instant Hard Drop (Guaranteed atomic lock)
+  const hardDrop = useCallback(() => {
+    const piece = pieceRef.current;
+    const currentGrid = gridRef.current;
+    if (!piece || isGameOverRef.current || isPausedRef.current) return;
+
+    let dropOffset = 0;
+    while (!checkCollision(piece, currentGrid, 0, dropOffset + 1)) {
+      dropOffset++;
+    }
+    const finalPiece = { ...piece, y: piece.y + dropOffset };
+    lockPieceAndAdvance(finalPiece, currentGrid);
+  }, [lockPieceAndAdvance]);
+
+  // Calculate Ghost Piece position (where it will land)
+  const getGhostY = (): number => {
+    if (!currentPiece) return 0;
+    let offset = 0;
+    while (!checkCollision(currentPiece, grid, 0, offset + 1)) {
+      offset++;
+    }
+    return currentPiece.y + offset;
+  };
+
+  const resetGame = useCallback(() => {
+    sound.playClick();
+    const emptyGrid = Array(ROWS).fill(null).map(() => Array(COLS).fill(''));
+    setGrid(emptyGrid);
+    gridRef.current = emptyGrid;
+    setCurrentPiece(getRandomPiece());
+    setScore(0);
+    setLines(0);
+    setLevel(1);
+    setIsGameOver(false);
+    setIsPaused(false);
+  }, []);
+
+  useEffect(() => {
+    resetGame();
+  }, [resetGame]);
+
+  // Gravity interval
   useEffect(() => {
     if (isGameOver || isPaused || !currentPiece) return;
 
-    const dropSpeed = Math.max(100, 700 - (level - 1) * 60);
+    const dropSpeed = Math.max(80, 650 - (level - 1) * 55);
     const interval = setInterval(() => {
-      if (!checkCollision(currentPiece, grid, 0, 1)) {
+      const piece = pieceRef.current;
+      const currentGrid = gridRef.current;
+      if (!piece) return;
+
+      if (!checkCollision(piece, currentGrid, 0, 1)) {
         setCurrentPiece(p => (p ? { ...p, y: p.y + 1 } : null));
       } else {
-        mergePiece();
+        lockPieceAndAdvance(piece, currentGrid);
       }
     }, dropSpeed);
 
     return () => clearInterval(interval);
-  }, [currentPiece, grid, isGameOver, isPaused, level, mergePiece]);
+  }, [currentPiece, isGameOver, isPaused, level, lockPieceAndAdvance]);
 
-  // Movements
+  // Movement controls
   const moveLeft = () => {
-    if (!currentPiece || isGameOver || isPaused) return;
-    if (!checkCollision(currentPiece, grid, -1, 0)) {
+    const piece = pieceRef.current;
+    if (!piece || isGameOver || isPaused) return;
+    if (!checkCollision(piece, grid, -1, 0)) {
       sound.playSlide();
       setCurrentPiece(p => (p ? { ...p, x: p.x - 1 } : null));
     }
   };
 
   const moveRight = () => {
-    if (!currentPiece || isGameOver || isPaused) return;
-    if (!checkCollision(currentPiece, grid, 1, 0)) {
+    const piece = pieceRef.current;
+    if (!piece || isGameOver || isPaused) return;
+    if (!checkCollision(piece, grid, 1, 0)) {
       sound.playSlide();
       setCurrentPiece(p => (p ? { ...p, x: p.x + 1 } : null));
     }
   };
 
   const moveDown = () => {
-    if (!currentPiece || isGameOver || isPaused) return;
-    if (!checkCollision(currentPiece, grid, 0, 1)) {
+    const piece = pieceRef.current;
+    if (!piece || isGameOver || isPaused) return;
+    if (!checkCollision(piece, grid, 0, 1)) {
       setCurrentPiece(p => (p ? { ...p, y: p.y + 1 } : null));
     } else {
-      mergePiece();
+      lockPieceAndAdvance(piece, grid);
     }
-  };
-
-  const hardDrop = () => {
-    if (!currentPiece || isGameOver || isPaused) return;
-    let dropOffset = 0;
-    while (!checkCollision(currentPiece, grid, 0, dropOffset + 1)) {
-      dropOffset++;
-    }
-    const droppedPiece = { ...currentPiece, y: currentPiece.y + dropOffset };
-    setCurrentPiece(droppedPiece);
-    setTimeout(() => mergePiece(), 50);
   };
 
   const rotate = () => {
-    if (!currentPiece || isGameOver || isPaused) return;
-    const newShape = rotatePiece(currentPiece);
-    const testPiece = { ...currentPiece, shape: newShape };
+    const piece = pieceRef.current;
+    if (!piece || isGameOver || isPaused) return;
+    const newShape = rotatePiece(piece);
+    const testPiece = { ...piece, shape: newShape };
     if (!checkCollision(testPiece, grid)) {
       sound.playClick();
       setCurrentPiece(testPiece);
     }
   };
 
-  // Keyboard controls
+  // Keyboard events
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (['ArrowLeft', 'KeyA'].includes(e.code)) {
         e.preventDefault();
         moveLeft();
@@ -227,9 +263,11 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
         hardDrop();
       }
     };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  });
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hardDrop]);
+
+  const ghostY = getGhostY();
 
   return (
     <div className="flex flex-col items-center w-full max-w-sm mx-auto select-none">
@@ -238,7 +276,7 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
         <div>
           <span className="text-[10px] tracking-[0.25em] text-white/40 uppercase font-mono block">PROTOCOL 02</span>
           <h2 className="text-2xl font-bold font-display tracking-tight text-white flex items-center gap-2">
-            TETRIS <span className="text-xs font-mono font-normal px-2 py-0.5 rounded-[2px] bg-white/[0.06] text-white/60">STACK</span>
+            TETRIS <span className="text-xs font-mono font-normal px-2 py-0.5 rounded-[2px] bg-white/[0.06] text-white/60">MONOLITH</span>
           </h2>
         </div>
 
@@ -265,6 +303,8 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
         {grid.map((row, r) =>
           row.map((color, c) => {
             let activeColor = color;
+            let isGhost = false;
+
             if (currentPiece) {
               const pr = r - currentPiece.y;
               const pc = c - currentPiece.x;
@@ -277,6 +317,19 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
               ) {
                 activeColor = currentPiece.color;
               }
+
+              // Check Ghost piece outline
+              const gr = r - ghostY;
+              if (
+                !activeColor &&
+                gr >= 0 &&
+                gr < currentPiece.shape.length &&
+                pc >= 0 &&
+                pc < currentPiece.shape[0].length &&
+                currentPiece.shape[gr][pc] !== 0
+              ) {
+                isGhost = true;
+              }
             }
 
             return (
@@ -285,6 +338,8 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
                 className={`w-full h-full rounded-[1px] transition-colors duration-75 ${
                   activeColor
                     ? 'border border-white/20 shadow-sm'
+                    : isGhost
+                    ? 'border border-dashed border-white/30 bg-white/[0.03]'
                     : 'bg-[#0e0e0e] border border-white/[0.03]'
                 }`}
                 style={{ backgroundColor: activeColor || undefined }}
@@ -296,7 +351,7 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
         {isGameOver && (
           <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-30">
             <span className="text-[10px] font-mono tracking-widest text-red-400 uppercase mb-1">GRID SATURATED</span>
-            <h3 className="text-xl font-display font-bold text-white mb-2">GAME OVER</h3>
+            <h3 className="text-xl font-display font-bold text-white mb-2">SEQUENCE TERMINATED</h3>
             <p className="text-xs font-mono text-white/50 mb-4">TOTAL SCORE: {score}</p>
             <button
               onClick={resetGame}
@@ -308,34 +363,40 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
         )}
       </div>
 
-      {/* Control Buttons */}
+      {/* Control Buttons (Left, Rotate, Right, Hard Drop) */}
       <div className="grid grid-cols-4 gap-2 mt-4 w-60">
         <button
           onClick={moveLeft}
           className="p-3 bg-[#0d0d0d] active:bg-[#252525] border border-white/[0.1] rounded-[2px] flex items-center justify-center text-white"
+          title="Move Left (A / Left)"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
         <button
           onClick={rotate}
           className="p-3 bg-[#0d0d0d] active:bg-[#252525] border border-white/[0.1] rounded-[2px] flex items-center justify-center text-white"
+          title="Rotate (W / Up)"
         >
           <RotateCw className="w-4 h-4" />
         </button>
         <button
           onClick={moveRight}
           className="p-3 bg-[#0d0d0d] active:bg-[#252525] border border-white/[0.1] rounded-[2px] flex items-center justify-center text-white"
+          title="Move Right (D / Right)"
         >
           <ArrowRight className="w-4 h-4" />
         </button>
         <button
           onClick={hardDrop}
-          className="p-3 bg-white text-black active:bg-neutral-200 border border-white rounded-[2px] flex items-center justify-center font-bold"
-          title="Hard Drop"
+          className="p-3 bg-amber-400 text-black active:bg-amber-300 border border-amber-300 rounded-[2px] flex items-center justify-center font-bold shadow-[0_0_12px_rgba(245,158,11,0.5)]"
+          title="INSTANT HARD DROP (Spacebar)"
         >
-          <ChevronDown className="w-4 h-4" />
+          <Zap className="w-4 h-4 fill-black" />
         </button>
       </div>
+      <span className="text-[10px] font-mono text-white/40 mt-2">
+        TIP: PRESS SPACEBAR OR ⚡ FOR INSTANT HARD DROP
+      </span>
     </div>
   );
 };

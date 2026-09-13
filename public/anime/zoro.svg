@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="zoroAura" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.45"/>
+      <stop offset="50%" stop-color="#064e3b" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#050505" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="zoroHair" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="60%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#064e3b"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="#050705"/>
+  <circle cx="300" cy="270" r="240" fill="url(#zoroAura)"/>
+  <circle cx="300" cy="270" r="215" fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="8 6" opacity="0.4"/>
+
+  <!-- Crossed Katana Blades on Back -->
+  <line x1="80" y1="100" x2="520" y2="540" stroke="#94a3b8" stroke-width="10" stroke-linecap="round"/>
+  <line x1="120" y1="80" x2="160" y2="120" stroke="#f59e0b" stroke-width="14"/>
+  <line x1="520" y1="100" x2="80" y2="540" stroke="#94a3b8" stroke-width="10" stroke-linecap="round"/>
+  <line x1="480" y1="80" x2="440" y2="120" stroke="#7c3aed" stroke-width="14"/>
+
+  <!-- Dark Green Robe / Open Chest -->
+  <path d="M140 520 L220 380 L300 420 L380 380 L460 520 L520 600 L80 600 Z" fill="#064e3b" stroke="#10b981" stroke-width="2"/>
+  <!-- Muscular Chest (Pale/Tan) -->
+  <polygon points="250,380 350,380 330,470 300,510 270,470" fill="#fed7aa"/>
+  <!-- Chest Diagonal Scar -->
+  <line x1="260" y1="410" x2="340" y2="480" stroke="#be123c" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Neck -->
+  <path d="M260 330 L340 330 L345 390 L255 390 Z" fill="#fed7aa"/>
+
+  <!-- Face / Jaw -->
+  <polygon points="220,230 235,325 300,365 365,325 380,230 365,180 235,180" fill="#fde68a"/>
+
+  <!-- Left Ear 3 Gold Earrings -->
+  <ellipse cx="218" cy="280" rx="3" ry="7" fill="#fbbf24" stroke="#d97706" stroke-width="1"/>
+  <ellipse cx="214" cy="283" rx="3" ry="7" fill="#fbbf24" stroke="#d97706" stroke-width="1"/>
+  <ellipse cx="210" cy="286" rx="3" ry="7" fill="#fbbf24" stroke="#d97706" stroke-width="1"/>
+
+  <!-- Eyes & Left Eye Scar -->
+  <!-- Left Eye Closed With Scar -->
+  <line x1="250" y1="220" x2="265" y2="280" stroke="#991b1b" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="245" y1="252" x2="270" y2="252" stroke="#451a03" stroke-width="2.5"/>
+
+  <!-- Right Eye Piercing Glare -->
+  <polygon points="360,248 325,245 320,258 355,260" fill="#ffffff"/>
+  <circle cx="340" cy="253" r="6" fill="#10b981" stroke="#000000" stroke-width="1.5"/>
+  <circle cx="340" cy="253" r="2.5" fill="#000000"/>
+
+  <!-- Fierce Eyebrows & Grin -->
+  <line x1="320" y1="240" x2="365" y2="246" stroke="#022c22" stroke-width="4" stroke-linecap="round"/>
+  <path d="M275 325 Q300 335 325 325" stroke="#334155" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Black Bandana on Forehead -->
+  <rect x="215" y="160" width="170" height="38" rx="2" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+  <path d="M220 180 Q300 170 380 180" stroke="#1e293b" stroke-width="3" fill="none"/>
+
+  <!-- Cropped Green Spiky Hair (Moss Head) -->
+  <path d="M220 160 L240 90 L260 140 L280 80 L300 130 L320 80 L340 140 L360 90 L380 160 Z" fill="url(#zoroHair)"/>
+
+  <!-- Title Badge -->
+  <rect x="30" y="30" width="160" height="34" rx="2" fill="#000000" fill-opacity="0.7" stroke="#10b981" stroke-width="1.5"/>
+  <text x="42" y="52" fill="#d1fae5" font-family="'Inter', sans-serif" font-size="12" font-weight="bold" letter-spacing="2">RORONOA ZORO</text>
+  <text x="42" y="570" fill="#a7f3d0" font-family="'JetBrains Mono', monospace" font-size="11" letter-spacing="3">THREE-SWORD // 鬼気九刀流</text>
+</svg>

@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="gojoAura" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.5"/>
+      <stop offset="50%" stop-color="#3b82f6" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#050505" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="hairGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="70%" stop-color="#e2e8f0"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="blindfoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="50%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="600" height="600" fill="#06060c"/>
+  <circle cx="300" cy="270" r="240" fill="url(#gojoAura)"/>
+  
+  <!-- Subtle Rune Grid -->
+  <circle cx="300" cy="270" r="220" fill="none" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="8 6" opacity="0.4"/>
+  <circle cx="300" cy="270" r="180" fill="none" stroke="#38bdf8" stroke-width="1" stroke-opacity="0.3"/>
+
+  <!-- High Collar Jacket -->
+  <path d="M160 520 L240 390 L300 420 L360 390 L440 520 L500 600 L100 600 Z" fill="#0f0f17" stroke="#312e81" stroke-width="3"/>
+  <path d="M250 400 L300 480 L350 400 Z" fill="#181826"/>
+  <!-- Gold Button -->
+  <circle cx="300" cy="450" r="10" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+
+  <!-- Neck -->
+  <path d="M260 350 L340 350 L350 410 L250 410 Z" fill="#fed7aa"/>
+
+  <!-- Face / Jaw -->
+  <polygon points="210,240 230,350 300,385 370,350 390,240 370,180 230,180" fill="#ffedd5"/>
+  <polygon points="270,345 300,355 330,345 300,360" fill="#fbcfe8" opacity="0.6"/>
+  <!-- Smirk -->
+  <path d="M275 335 Q300 348 325 335" stroke="#475569" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Blindfold (Iconic Black Wrap) -->
+  <path d="M190 200 C190 200, 300 185, 410 200 L415 285 C415 285, 300 270, 185 285 Z" fill="url(#blindfoldGrad)" stroke="#6366f1" stroke-width="2"/>
+  <!-- Blindfold Folds -->
+  <path d="M195 230 Q300 215 405 230" stroke="#334155" stroke-width="3" fill="none"/>
+  <path d="M190 260 Q300 245 410 260" stroke="#1e293b" stroke-width="3" fill="none"/>
+
+  <!-- Six Eyes Blue Glow Beneath Blindfold -->
+  <ellipse cx="255" cy="242" rx="16" ry="6" fill="#38bdf8" opacity="0.9" filter="drop-shadow(0 0 8px #38bdf8)"/>
+  <ellipse cx="345" cy="242" rx="16" ry="6" fill="#38bdf8" opacity="0.9" filter="drop-shadow(0 0 8px #38bdf8)"/>
+
+  <!-- Spiky White Hair -->
+  <!-- Top Spikes -->
+  <path d="M300 40 L270 120 L230 60 L230 140 L180 90 L200 180 L150 160 L180 230 L160 270 L210 240 L195 190 L240 140 L280 110 L300 40 Z" fill="url(#hairGrad)"/>
+  <path d="M300 40 L330 120 L370 60 L370 140 L420 90 L400 180 L450 160 L420 230 L440 270 L390 240 L405 190 L360 140 L320 110 L300 40 Z" fill="url(#hairGrad)"/>
+  <path d="M260 70 L300 130 L340 70 L320 150 L280 150 Z" fill="#ffffff"/>
+  <path d="M220 130 L260 170 L230 200 Z" fill="#cbd5e1"/>
+  <path d="M380 130 L340 170 L370 200 Z" fill="#cbd5e1"/>
+
+  <!-- Front Hair Bangs overlapping blindfold -->
+  <path d="M240 180 L255 220 L270 180 Z" fill="#ffffff"/>
+  <path d="M280 180 L300 225 L320 180 Z" fill="#ffffff"/>
+  <path d="M330 180 L345 220 L360 180 Z" fill="#ffffff"/>
+
+  <!-- Infinite Void Kanji Badge -->
+  <rect x="30" y="30" width="160" height="34" rx="2" fill="#000000" fill-opacity="0.7" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="42" y="52" fill="#e0e7ff" font-family="'Inter', sans-serif" font-size="12" font-weight="bold" letter-spacing="2">GOJO SATORU</text>
+  <text x="42" y="570" fill="#a5b4fc" font-family="'JetBrains Mono', monospace" font-size="11" letter-spacing="3">LIMITLESS // 領域展開</text>
+</svg>
