@@ -1,0 +1,20 @@
+﻿# ARCADEX
+
+> Midnight Editorial Cognitive Suite & Arcade by Ishant.
+
+ARCADEX is a bespoke, lag-free cognitive gaming suite blending high-end fashion editorial aesthetics with pure mathematical rigor. It features 13 complete protocols, 100 progressive levels per game, 22 anime masters, and real-time telemetry.
+
+## Key Protocols
+- Snake (Neural Reflex)
+- Tetris (Spatial Matrix)
+- 2048 (Exponential Synthesis)
+- Anime Sliding Puzzle (22 Anime Masters)
+- Sudoku (Numerical Deductions)
+- Wordle (Lexical Matrix with 100 levels)
+- Memory Match (Synaptic Recall)
+- Simon (Acoustic Sequence)
+- Chimp Test (Working Memory)
+- Corsi Blocks (Visuospatial Span)
+- Connect4 (Minimax Adversarial Logic)
+- 15-Slide Puzzle (Permutation Logic)
+- Arrow Escape (Grid Directional Protocol)

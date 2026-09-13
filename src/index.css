@@ -2,14 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'SupercellClash';
+  src: url('/fonts/Clash-Regular.woff') format('woff'),
+       url('/fonts/Clash-Regular.otf') format('opentype'),
+       url('/fonts/Clash_Regular.otf.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Clash';
+  src: url('/fonts/Clash-Regular.woff') format('woff'),
+       url('/fonts/Clash-Regular.otf') format('opentype'),
+       url('/fonts/Clash_Regular.otf.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Supercell Clash font for display elements, brand logo, and game banners */
+.font-display, .font-clash {
+  font-family: 'SupercellClash', 'Clash', -apple-system, sans-serif;
+}
+
 :root {
   --bg-main: #050505;
   --bg-footer: #0a0a0a;
   --color-white: #ffffff;
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.22);
+  --border-hover: rgba(6, 182, 212, 0.35);
   --text-muted: rgba(255, 255, 255, 0.45);
   --text-dim: rgba(255, 255, 255, 0.25);
+  --accent-cyan: #06b6d4;
+  --accent-cyan-glow: rgba(6, 182, 212, 0.45);
 }
 
 * {
@@ -35,11 +62,11 @@ html, body {
   background: #050505;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(6, 182, 212, 0.3);
   border-radius: 1px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(6, 182, 212, 0.6);
 }
 
 /* Subtle Editorial Grid Texture */
@@ -50,17 +77,21 @@ html, body {
     linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
 }
 
-/* Atmospheric Light Leaks */
-.light-leak-amber {
+/* Radial Vignette for Hero & Ambient Background */
+.bg-radial-vignette {
+  background: radial-gradient(circle at 50% 40%, transparent 20%, rgba(5, 5, 5, 0.7) 70%, #050505 100%);
+}
+
+/* Atmospheric Light Leaks (Hardware-Accelerated Smooth Radial Gradients) */
+.light-leak-cyan {
   position: absolute;
   top: -10%;
   left: -5%;
   width: 650px;
   height: 650px;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.01) 50%, transparent 70%);
-  filter: blur(120px);
+  background: radial-gradient(circle at center, rgba(6, 182, 212, 0.14) 0%, rgba(6, 182, 212, 0.05) 35%, transparent 70%);
   pointer-events: none;
-  mix-blend-mode: screen;
+  transform: translateZ(0);
 }
 
 .light-leak-blue {
@@ -69,10 +100,9 @@ html, body {
   right: -5%;
   width: 700px;
   height: 700px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.02) 50%, transparent 70%);
-  filter: blur(140px);
+  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.10) 0%, rgba(99, 102, 241, 0.03) 40%, transparent 70%);
   pointer-events: none;
-  mix-blend-mode: screen;
+  transform: translateZ(0);
 }
 
 /* Brutalist Border Rules */
@@ -83,18 +113,46 @@ html, body {
   transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .border-editorial-hover:hover {
-  border-color: rgba(255, 255, 255, 0.25);
+  border-color: rgba(6, 182, 212, 0.4);
 }
 
-/* 2048 Tile Slide & Pop Animations */
+/* 2048 Ultra-Smooth Animations */
 @keyframes popIn {
-  0% { transform: scale(0.6); opacity: 0; }
-  70% { transform: scale(1.08); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
+  0% { transform: scale(0.3); opacity: 0; filter: brightness(1.5); }
+  60% { transform: scale(1.12); opacity: 1; filter: brightness(1.2); }
+  100% { transform: scale(1); opacity: 1; filter: brightness(1); }
+}
+
+@keyframes mergePulse {
+  0% { transform: scale(0.9); filter: brightness(1.8) drop-shadow(0 0 16px rgba(6, 182, 212, 0.9)); }
+  45% { transform: scale(1.18); filter: brightness(1.4) drop-shadow(0 0 24px rgba(34, 211, 238, 0.9)); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+@keyframes floatScoreUp {
+  0% { transform: translateY(0) scale(0.8); opacity: 1; }
+  100% { transform: translateY(-45px) scale(1.2); opacity: 0; }
+}
+
+@keyframes pulseCyan {
+  0%, 100% { box-shadow: 0 0 22px rgba(6, 182, 212, 0.7), inset 0 0 10px rgba(255, 255, 255, 0.5); }
+  50% { box-shadow: 0 0 38px rgba(34, 211, 238, 0.95), inset 0 0 16px rgba(255, 255, 255, 0.8); }
 }
 
 .tile-pop {
-  animation: popIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.tile-merge {
+  animation: mergePulse 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.score-float {
+  animation: floatScoreUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.tile-cyan-pulse {
+  animation: pulseCyan 2s infinite ease-in-out;
 }
 
 /* Difference Mode Bar */

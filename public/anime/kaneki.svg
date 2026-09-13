@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="kanekiAura" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#dc2626" stop-opacity="0.55"/>
+      <stop offset="60%" stop-color="#18181b" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#050505" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="kanekiHair" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#e2e8f0"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="#080506"/>
+  <circle cx="300" cy="270" r="240" fill="url(#kanekiAura)"/>
+  <circle cx="300" cy="270" r="215" fill="none" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="10 6" opacity="0.4"/>
+  
+  <!-- Black Ghoul Battle Suit -->
+  <path d="M140 540 L230 380 L300 420 L370 380 L460 540 L520 600 L80 600 Z" fill="#09090b" stroke="#dc2626" stroke-width="2"/>
+  <path d="M240 390 L300 440 L360 390 Z" fill="#18181b"/>
+
+  <!-- Ghoul Leather Mask with Teeth Zipper -->
+  <path d="M220 260 L235 370 L300 410 L365 370 L380 260 Z" fill="#18181b" stroke="#27272a" stroke-width="2"/>
+  <!-- Silver Zipper Smile -->
+  <path d="M255 330 Q300 355 345 330" stroke="#e2e8f0" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M255 330 Q300 355 345 330" stroke="#09090b" stroke-width="2" fill="none" stroke-dasharray="4 4"/>
+  <!-- Mask Rivets & Eye Patch covering right eye -->
+  <circle cx="340" cy="250" r="14" fill="#09090b" stroke="#52525b" stroke-width="2"/>
+  <line x1="326" y1="250" x2="354" y2="250" stroke="#71717a" stroke-width="3"/>
+
+  <!-- Left Kakugan Ghoul Eye (Pitch Black Sclera + Glowing Crimson Iris) -->
+  <polygon points="240,245 275,240 278,258 245,260" fill="#09090b"/>
+  <!-- Red veins spreading from eye -->
+  <path d="M235 240 L220 230 M235 260 L220 270 M280 240 L295 230" stroke="#dc2626" stroke-width="2" fill="none"/>
+  <circle cx="260" cy="250" r="8" fill="#dc2626" filter="drop-shadow(0 0 6px #dc2626)"/>
+  <circle cx="260" cy="250" r="3" fill="#450a0a"/>
+
+  <!-- Messy White Awakened Hair -->
+  <path d="M300 45 L260 110 L220 60 L225 140 L170 95 L195 180 L160 160 L180 230 L225 190 Z" fill="url(#kanekiHair)"/>
+  <path d="M300 45 L340 110 L380 60 L375 140 L430 95 L405 180 L440 160 L420 230 L375 190 Z" fill="url(#kanekiHair)"/>
+  <path d="M240 150 L260 230 L280 160 Z" fill="#ffffff"/>
+  <path d="M360 150 L340 230 L320 160 Z" fill="#ffffff"/>
+
+  <!-- Rinkaku Kagune Tentacles emerging behind back -->
+  <path d="M140 400 Q80 300 100 200 Q120 240 150 360 Z" fill="#b91c1c" opacity="0.8"/>
+  <path d="M460 400 Q520 300 500 200 Q480 240 450 360 Z" fill="#b91c1c" opacity="0.8"/>
+
+  <!-- Title Badge -->
+  <rect x="30" y="30" width="160" height="34" rx="2" fill="#000000" fill-opacity="0.8" stroke="#dc2626" stroke-width="1.5"/>
+  <text x="42" y="52" fill="#fee2e2" font-family="'Inter', sans-serif" font-size="12" font-weight="bold" letter-spacing="2">KEN KANEKI</text>
+  <text x="42" y="570" fill="#fca5a5" font-family="'JetBrains Mono', monospace" font-size="11" letter-spacing="3">ONE-EYED GHOUL // 東京喰種</text>
+</svg>

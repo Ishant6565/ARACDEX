@@ -1,0 +1,49 @@
+{
+  "name": "ARCADEX // Cognitive Arcade",
+  "short_name": "ARCADEX",
+  "description": "Bespoke, lag-free cognitive arcade with 12 elite protocols, 100 levels per game, and unlimited Arrow Escape.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["games", "entertainment", "puzzle"],
+  "shortcuts": [
+    {
+      "name": "Arrow Escape",
+      "url": "/?game=arrow-escape",
+      "description": "Unlimited Arrow Escape Untangle Puzzle",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "2048 Nexus",
+      "url": "/?game=2048",
+      "description": "Play 2048 Nexus",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

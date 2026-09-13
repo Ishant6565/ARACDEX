@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { sound } from '../services/audio';
-import { recordGameWin } from '../services/storage';
-import { RotateCcw, Play, Pause, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Zap, Trophy } from 'lucide-react';
+import { recordGameWin, getGameLevel, setGameLevel } from '../services/storage';
+import { RotateCcw, Play, Pause, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Layers, Trophy, CheckCircle } from 'lucide-react';
 
 const GRID_SIZE = 20;
 
-type Point = { x: number; y: number };
+type Point = {
+  x: number;
+  y: number;
+};
+
 type Direction = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT';
 
 export const SnakeGame: React.FC<{ onComplete?: (score: number) => void }> = ({ onComplete }) => {
@@ -19,13 +23,23 @@ export const SnakeGame: React.FC<{ onComplete?: (score: number) => void }> = ({ 
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [score, setScore] = useState<number>(0);
+  const [level, setLevel] = useState<number>(() => getGameLevel('snake'));
+  const [foodEatenInLevel, setFoodEatenInLevel] = useState<number>(0);
+  const [showLevelPicker, setShowLevelPicker] = useState<boolean>(false);
+  const [levelClearedMessage, setLevelClearedMessage] = useState<boolean>(false);
+
   const [bestScore, setBestScore] = useState<number>(() => {
     return Number(localStorage.getItem('arcadex_best_snake') || '0');
   });
-  const [speed, setSpeed] = useState<number>(110); // ms per tick
 
   const dirRef = useRef<Direction>(direction);
   dirRef.current = direction;
+  const isGameOverRef = useRef(isGameOver);
+  isGameOverRef.current = isGameOver;
+  const isPausedRef = useRef(isPaused);
+  isPausedRef.current = isPaused;
+
+  const targetFoodForLevel = 4 + Math.min(6, Math.floor(level / 15));
 
   const generateFood = useCallback((currentSnake: Point[]): Point => {
     let newFood: Point;
@@ -34,62 +48,83 @@ export const SnakeGame: React.FC<{ onComplete?: (score: number) => void }> = ({ 
         x: Math.floor(Math.random() * GRID_SIZE),
         y: Math.floor(Math.random() * GRID_SIZE),
       };
-      const collides = currentSnake.some(seg => seg.x === newFood.x && seg.y === newFood.y);
-      if (!collides) break;
+      const collision = currentSnake.some(
+        segment => segment.x === newFood.x && segment.y === newFood.y
+      );
+      if (!collision) break;
     }
     return newFood;
   }, []);
 
   const resetGame = useCallback(() => {
     sound.playClick();
-    const initialSnake = [
+    const initialSnake: Point[] = [
       { x: 10, y: 10 },
       { x: 10, y: 11 },
       { x: 10, y: 12 },
     ];
     setSnake(initialSnake);
     setDirection('UP');
-    dirRef.current = 'UP';
     setFood(generateFood(initialSnake));
     setIsGameOver(false);
     setIsPaused(false);
     setScore(0);
+    setFoodEatenInLevel(0);
   }, [generateFood]);
 
-  // Main game loop
+  const selectSpecificLevel = (targetLvl: number) => {
+    sound.playClick();
+    setLevel(targetLvl);
+    setGameLevel('snake', targetLvl);
+    setShowLevelPicker(false);
+    resetGame();
+  };
+
   useEffect(() => {
-    if (isGameOver || isPaused) return;
+    resetGame();
+  }, [resetGame]);
+
+  // Main game tick loop
+  useEffect(() => {
+    if (isGameOver || isPaused || showLevelPicker) return;
+
+    // Speed scales from level 1 (140ms) to level 100 (45ms)
+    const tickSpeed = Math.max(45, 140 - (level - 1) * 0.98);
 
     const interval = setInterval(() => {
       setSnake(prevSnake => {
         const head = { ...prevSnake[0] };
         const currentDir = dirRef.current;
 
-        if (currentDir === 'UP') head.y -= 1;
-        if (currentDir === 'DOWN') head.y += 1;
-        if (currentDir === 'LEFT') head.x -= 1;
-        if (currentDir === 'RIGHT') head.x += 1;
+        switch (currentDir) {
+          case 'UP': head.y -= 1; break;
+          case 'DOWN': head.y += 1; break;
+          case 'LEFT': head.x -= 1; break;
+          case 'RIGHT': head.x += 1; break;
+        }
 
-        // Wall Collision
+        // Wall collision
         if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
-          sound.playError();
+          sound.playDefeat();
           setIsGameOver(true);
           return prevSnake;
         }
 
-        // Self Collision
-        if (prevSnake.slice(1).some(seg => seg.x === head.x && seg.y === head.y)) {
-          sound.playError();
-          setIsGameOver(true);
-          return prevSnake;
+        // Self collision
+        for (let i = 0; i < prevSnake.length; i++) {
+          if (head.x === prevSnake[i].x && head.y === prevSnake[i].y) {
+            sound.playDefeat();
+            setIsGameOver(true);
+            return prevSnake;
+          }
         }
 
         const newSnake = [head, ...prevSnake];
 
-        // Check Food
+        // Eat food
         if (head.x === food.x && head.y === food.y) {
           sound.playEat();
-          const newScore = score + 10;
+          const newScore = score + 10 * level;
           setScore(newScore);
 
           if (newScore > bestScore) {
@@ -97,38 +132,64 @@ export const SnakeGame: React.FC<{ onComplete?: (score: number) => void }> = ({ 
             localStorage.setItem('arcadex_best_snake', String(newScore));
           }
 
-          recordGameWin('snake', newScore);
-          onComplete?.(newScore);
           setFood(generateFood(newSnake));
+
+          setFoodEatenInLevel(curr => {
+            const nextCount = curr + 1;
+            if (nextCount >= targetFoodForLevel) {
+              // Level Up!
+              sound.playSuccess();
+              setLevel(prevLvl => {
+                const nextLvl = Math.min(100, prevLvl + 1);
+                setGameLevel('snake', nextLvl);
+                recordGameWin('snake', newScore, 'SNAKE CYBER', prevLvl);
+                onComplete?.(newScore);
+                setLevelClearedMessage(true);
+                setTimeout(() => setLevelClearedMessage(false), 2000);
+                return nextLvl;
+              });
+              return 0;
+            }
+            return nextCount;
+          });
         } else {
           newSnake.pop();
         }
 
         return newSnake;
       });
-    }, speed);
+    }, tickSpeed);
 
     return () => clearInterval(interval);
-  }, [isGameOver, isPaused, food, score, bestScore, speed, generateFood, onComplete]);
+  }, [food, isGameOver, isPaused, showLevelPicker, score, bestScore, level, targetFoodForLevel, generateFood, onComplete]);
 
-  // Key controls
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (['ArrowUp', 'KeyW'].includes(e.code) && dirRef.current !== 'DOWN') {
+      if (showLevelPicker) return;
+
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
         e.preventDefault();
-        setDirection('UP');
-      } else if (['ArrowDown', 'KeyS'].includes(e.code) && dirRef.current !== 'UP') {
-        e.preventDefault();
-        setDirection('DOWN');
-      } else if (['ArrowLeft', 'KeyA'].includes(e.code) && dirRef.current !== 'RIGHT') {
-        e.preventDefault();
-        setDirection('LEFT');
-      } else if (['ArrowRight', 'KeyD'].includes(e.code) && dirRef.current !== 'LEFT') {
-        e.preventDefault();
-        setDirection('RIGHT');
-      } else if (e.code === 'Space') {
-        e.preventDefault();
+      }
+
+      if (e.code === 'Space') {
         setIsPaused(p => !p);
+        return;
+      }
+
+      const currentDir = dirRef.current;
+      if ((e.code === 'ArrowUp' || e.code === 'KeyW') && currentDir !== 'DOWN') {
+        sound.playMove();
+        setDirection('UP');
+      } else if ((e.code === 'ArrowDown' || e.code === 'KeyS') && currentDir !== 'UP') {
+        sound.playMove();
+        setDirection('DOWN');
+      } else if ((e.code === 'ArrowLeft' || e.code === 'KeyA') && currentDir !== 'RIGHT') {
+        sound.playMove();
+        setDirection('LEFT');
+      } else if ((e.code === 'ArrowRight' || e.code === 'KeyD') && currentDir !== 'LEFT') {
+        sound.playMove();
+        setDirection('RIGHT');
       }
     };
 
@@ -147,18 +208,28 @@ export const SnakeGame: React.FC<{ onComplete?: (score: number) => void }> = ({ 
   return (
     <div className="flex flex-col items-center w-full max-w-md mx-auto select-none">
       {/* Header */}
-      <div className="flex items-center justify-between w-full mb-4 pb-3 border-b border-white/[0.08]">
+      <div className="flex items-center justify-between w-full mb-3 pb-3 border-b border-white/[0.08]">
         <div>
-          <span className="text-[10px] tracking-[0.25em] text-white/40 uppercase font-mono block">PROTOCOL 01</span>
+          <span className="text-[10px] tracking-[0.25em] text-cyan-400 uppercase font-mono block">PROTOCOL 01</span>
           <h2 className="text-2xl font-bold font-display tracking-tight text-white flex items-center gap-2">
-            SNAKE CYBER <span className="text-xs font-mono font-normal px-2 py-0.5 rounded-[2px] bg-white/[0.06] text-white/60">60 FPS</span>
+            SNAKE CYBER <span className="text-xs font-mono font-normal px-2 py-0.5 rounded-[2px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">100 LVLS</span>
           </h2>
         </div>
 
         <div className="flex items-center gap-2 font-mono">
+          <button
+            onClick={() => setShowLevelPicker(true)}
+            className="px-2.5 py-1 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-[2px] text-right cursor-pointer transition-all"
+            title="Pick level from 100 levels"
+          >
+            <span className="text-[9px] text-cyan-400 uppercase block font-bold flex items-center gap-1">
+              <Layers className="w-2.5 h-2.5" /> LEVEL
+            </span>
+            <span className="text-sm font-bold text-cyan-400">{level}/100</span>
+          </button>
           <div className="px-3 py-1 bg-[#0a0a0a] border border-white/[0.08] rounded-[2px] text-right">
             <span className="text-[9px] text-white/40 uppercase block tracking-wider">SCORE</span>
-            <span className="text-base font-bold text-amber-400">{score}</span>
+            <span className="text-base font-bold text-cyan-400">{score}</span>
           </div>
           <div className="px-3 py-1 bg-[#0a0a0a] border border-white/[0.08] rounded-[2px] text-right">
             <span className="text-[9px] text-white/40 uppercase block tracking-wider">RECORD</span>
@@ -179,62 +250,64 @@ export const SnakeGame: React.FC<{ onComplete?: (score: number) => void }> = ({ 
           </button>
           <button
             onClick={resetGame}
-            className="flex items-center gap-1 px-2.5 py-1 bg-[#0d0d0d] hover:bg-[#181818] border border-white/[0.08] rounded-[2px] text-white/70 hover:text-white"
+            className="p-1.5 bg-[#0d0d0d] hover:bg-[#181818] border border-white/[0.08] rounded-[2px] text-white/70 hover:text-white"
+            title="Restart"
           >
-            <RotateCcw className="w-3 h-3" /> RESET
+            <RotateCcw className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          {(['140', '110', '80'] as const).map((spd, idx) => (
-            <button
-              key={spd}
-              onClick={() => setSpeed(Number(spd))}
-              className={`px-2 py-0.5 rounded-[1px] border text-[10px] uppercase ${
-                speed === Number(spd)
-                  ? 'bg-white text-black border-white font-bold'
-                  : 'bg-[#0d0d0d] text-white/50 border-white/[0.08]'
-              }`}
-            >
-              {idx === 0 ? 'ZEN' : idx === 1 ? 'NORMAL' : 'TURBO'}
-            </button>
-          ))}
+        <div className="text-right text-[11px] text-white/50">
+          LVL TARGET: <span className="text-cyan-400 font-bold">{foodEatenInLevel}/{targetFoodForLevel} ORBS</span>
         </div>
       </div>
 
-      {/* 20x20 Snake Canvas Grid */}
-      <div className="relative w-full aspect-square bg-[#070707] border border-white/20 rounded-[2px] shadow-2xl overflow-hidden">
-        {/* Subtle matrix grid lines */}
-        <div className="absolute inset-0 bg-grid-editorial pointer-events-none" />
+      {/* Level Promoted Banner */}
+      {levelClearedMessage && (
+        <div className="w-full mb-2 px-3 py-1.5 bg-cyan-500/10 border border-cyan-400/40 text-cyan-300 font-mono text-xs flex items-center justify-between rounded-[2px] animate-pulse">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-3.5 h-3.5 text-cyan-400" />
+            <span>LEVEL PROMOTED! NOW LVL {level}</span>
+          </div>
+          <span className="text-[10px] uppercase text-cyan-400 font-bold">VELOCITY +</span>
+        </div>
+      )}
 
-        {/* Snake Segments */}
-        {snake.map((segment, idx) => {
-          const isHead = idx === 0;
+      {/* Grid Canvas */}
+      <div className="relative w-full aspect-square max-w-[360px] bg-[#070707] border border-cyan-500/30 rounded-[2px] overflow-hidden shadow-[0_0_30px_rgba(6,182,212,0.12)]">
+        {/* Subtle matrix dots */}
+        <div className="absolute inset-0 grid grid-cols-20 grid-rows-20 pointer-events-none opacity-20">
+          {Array.from({ length: 400 }).map((_, i) => (
+            <div key={i} className="border-[0.5px] border-white/10" />
+          ))}
+        </div>
+
+        {/* Snake body segments */}
+        {snake.map((segment, index) => {
+          const isHead = index === 0;
           return (
             <div
-              key={`${segment.x}-${segment.y}-${idx}`}
+              key={`${segment.x}-${segment.y}-${index}`}
               style={{
                 left: `${(segment.x / GRID_SIZE) * 100}%`,
                 top: `${(segment.y / GRID_SIZE) * 100}%`,
                 width: `${100 / GRID_SIZE}%`,
                 height: `${100 / GRID_SIZE}%`,
               }}
-              className={`absolute p-0.5 transition-transform duration-75 ${
-                isHead ? 'z-10' : 'z-0'
-              }`}
+              className="absolute p-0.5 transition-all duration-75"
             >
               <div
                 className={`w-full h-full rounded-[1px] ${
                   isHead
-                    ? 'bg-white shadow-[0_0_12px_rgba(255,255,255,0.8)]'
-                    : 'bg-neutral-400 opacity-90'
+                    ? 'bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,1)]'
+                    : 'bg-cyan-700/80 border border-cyan-500/40'
                 }`}
               />
             </div>
           );
         })}
 
-        {/* Glowing Food */}
+        {/* Glowing Food Orb */}
         <div
           style={{
             left: `${(food.x / GRID_SIZE) * 100}%`,
@@ -244,18 +317,19 @@ export const SnakeGame: React.FC<{ onComplete?: (score: number) => void }> = ({ 
           }}
           className="absolute p-0.5 z-10 animate-pulse"
         >
-          <div className="w-full h-full bg-amber-400 rounded-full shadow-[0_0_15px_rgba(245,158,11,1)]" />
+          <div className="w-full h-full bg-cyan-300 rounded-full shadow-[0_0_18px_rgba(34,211,238,1)]" />
         </div>
 
         {/* Game Over Banner */}
         {isGameOver && (
           <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in z-30">
             <span className="text-xs font-mono tracking-[0.25em] text-red-400 uppercase mb-1">COLLISION DETECTED</span>
-            <h3 className="text-2xl font-display font-bold text-white mb-2">SEQUENCE TERMINATED</h3>
+            <h3 className="text-2xl font-display font-bold text-white mb-1">SEQUENCE TERMINATED</h3>
+            <p className="text-xs font-mono text-cyan-400 mb-1">LEVEL ATTAINED: {level} / 100</p>
             <p className="text-xs font-mono text-white/50 mb-6">FINAL SCORE: {score} UNITS</p>
             <button
               onClick={resetGame}
-              className="px-6 py-2.5 bg-white text-black font-mono font-bold text-xs uppercase tracking-widest hover:bg-neutral-200 transition-all rounded-[2px]"
+              className="px-6 py-2.5 bg-cyan-400 hover:bg-cyan-300 text-black font-mono font-bold text-xs uppercase tracking-widest transition-all rounded-[2px] shadow-[0_0_15px_rgba(6,182,212,0.4)]"
             >
               RESTART PROTOCOL
             </button>
@@ -265,15 +339,23 @@ export const SnakeGame: React.FC<{ onComplete?: (score: number) => void }> = ({ 
         {/* Pause Banner */}
         {isPaused && !isGameOver && (
           <div className="absolute inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center z-20">
-            <span className="font-mono text-xs tracking-widest text-white/70 uppercase px-4 py-2 border border-white/20 bg-black/60 rounded-[2px]">
+            <span className="font-mono text-xs tracking-widest text-cyan-400 uppercase px-4 py-2 border border-cyan-400/40 bg-black/60 rounded-[2px]">
               SYSTEM PAUSED
             </span>
           </div>
         )}
       </div>
 
+      {/* Progress Bar */}
+      <div className="w-full max-w-[360px] h-1.5 bg-[#151515] border border-white/[0.08] mt-3 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-cyan-400 transition-all duration-300 shadow-[0_0_8px_rgba(6,182,212,0.8)]"
+          style={{ width: `${(foodEatenInLevel / targetFoodForLevel) * 100}%` }}
+        />
+      </div>
+
       {/* Mobile Touch Controller */}
-      <div className="grid grid-cols-3 gap-2 mt-5 w-48 sm:hidden">
+      <div className="grid grid-cols-3 gap-2 mt-4 w-48 sm:hidden">
         <div></div>
         <button
           onClick={() => changeDirection('UP')}
@@ -282,6 +364,7 @@ export const SnakeGame: React.FC<{ onComplete?: (score: number) => void }> = ({ 
           <ArrowUp className="w-4 h-4" />
         </button>
         <div></div>
+
         <button
           onClick={() => changeDirection('LEFT')}
           className="p-3 bg-[#0d0d0d] active:bg-[#252525] border border-white/[0.1] rounded-[2px] flex items-center justify-center text-white"
@@ -301,6 +384,60 @@ export const SnakeGame: React.FC<{ onComplete?: (score: number) => void }> = ({ 
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
+
+      {/* 100 Levels Picker Modal */}
+      {showLevelPicker && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-md animate-fade-in p-3 sm:p-6">
+          <div className="min-h-full flex items-center justify-center py-4">
+            <div className="bg-[#0b0b0b] border border-cyan-500/40 rounded-[2px] p-5 sm:p-6 max-w-md w-full max-h-[85vh] flex flex-col shadow-[0_0_40px_rgba(6,182,212,0.2)] overflow-hidden my-auto">
+              <div className="flex items-center justify-between pb-3 border-b border-white/[0.08] mb-4 shrink-0">
+                <div>
+                  <span className="text-[10px] font-mono text-cyan-400 tracking-widest uppercase block">// ARCHIVAL SELECTION</span>
+                  <h3 className="text-xl font-display font-bold text-white flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-cyan-400" /> SELECT SNAKE LEVEL
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowLevelPicker(false)}
+                  className="px-2.5 py-1 text-xs font-mono text-white/50 hover:text-white border border-white/10 rounded-[2px]"
+                >
+                  ESC
+                </button>
+              </div>
+
+              <p className="text-xs font-mono text-white/60 mb-3 shrink-0">
+                100 tiered levels with accelerating sensory velocity. Eat required orbs to advance to the next level!
+              </p>
+
+              <div className="grid grid-cols-10 gap-1.5 overflow-y-auto pr-1 py-1 max-h-[50vh] font-mono text-xs flex-1 min-h-0">
+                {Array.from({ length: 100 }, (_, i) => i + 1).map(lvl => (
+                  <button
+                    key={lvl}
+                    onClick={() => selectSpecificLevel(lvl)}
+                    className={`h-9 rounded-[2px] flex items-center justify-center text-xs font-bold border transition-all ${
+                      level === lvl
+                        ? 'bg-cyan-400 text-black border-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.7)]'
+                        : 'bg-[#141414] text-white/70 hover:text-white border-white/[0.08] hover:border-cyan-400/50'
+                    }`}
+                  >
+                    {lvl}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-white/[0.08] flex justify-between items-center text-xs font-mono text-white/40 shrink-0">
+                <span>CURRENT: LEVEL {level}</span>
+                <button
+                  onClick={() => setShowLevelPicker(false)}
+                  className="px-4 py-1.5 bg-white text-black font-bold uppercase rounded-[2px]"
+                >
+                  CLOSE
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

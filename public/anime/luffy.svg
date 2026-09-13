@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="luffyAura" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#f59e0b" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#050505" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="strawHat" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="60%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#ca8a04"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="#090505"/>
+  <circle cx="300" cy="270" r="240" fill="url(#luffyAura)"/>
+  <circle cx="300" cy="270" r="215" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="10 6" opacity="0.35"/>
+  
+  <!-- Open Red Pirate Vest & X-Chest Scar -->
+  <path d="M140 540 L230 400 L300 450 L370 400 L460 540 L520 600 L80 600 Z" fill="#dc2626" stroke="#b91c1c" stroke-width="2"/>
+  <!-- Exposed Bare Chest -->
+  <path d="M240 400 L300 450 L360 400 L360 600 L240 600 Z" fill="#fed7aa"/>
+  <!-- Giant X Chest Scar from Akainu -->
+  <line x1="260" y1="460" x2="340" y2="560" stroke="#991b1b" stroke-width="6" stroke-linecap="round"/>
+  <line x1="340" y1="460" x2="260" y2="560" stroke="#991b1b" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Neck -->
+  <path d="M260 340 L340 340 L345 400 L255 400 Z" fill="#fed7aa"/>
+  
+  <!-- Face / Huge Pirate Grin -->
+  <polygon points="220,230 235,330 300,380 365,330 380,230 365,180 235,180" fill="#ffedd5"/>
+  <!-- Left Eye Stitched Scar -->
+  <path d="M250 270 Q258 274 266 270" stroke="#991b1b" stroke-width="2" fill="none"/>
+  <line x1="258" y1="266" x2="258" y2="276" stroke="#991b1b" stroke-width="2"/>
+
+  <!-- Big Joyful Grin with White Teeth -->
+  <path d="M250 325 Q300 365 350 325 Z" fill="#ffffff" stroke="#991b1b" stroke-width="3"/>
+  <line x1="250" y1="335" x2="350" y2="335" stroke="#991b1b" stroke-width="1.5"/>
+
+  <!-- Big Round Anime Eyes -->
+  <circle cx="265" cy="245" r="10" fill="#0f172a"/>
+  <circle cx="268" cy="242" r="3.5" fill="#ffffff"/>
+  <circle cx="335" cy="245" r="10" fill="#0f172a"/>
+  <circle cx="338" cy="242" r="3.5" fill="#ffffff"/>
+
+  <!-- Shaggy Black Hair -->
+  <path d="M210 180 L230 250 L250 200 L270 240 L300 210 L330 240 L350 200 L370 250 L390 180 Z" fill="#0f172a"/>
+
+  <!-- Iconic Straw Hat (Yellow woven hat + Red ribbon) -->
+  <ellipse cx="300" cy="160" rx="190" ry="40" fill="url(#strawHat)" stroke="#ca8a04" stroke-width="2"/>
+  <path d="M210 155 Q300 80 390 155 Z" fill="url(#strawHat)" stroke="#ca8a04" stroke-width="2"/>
+  <!-- Red Ribbon on Straw Hat -->
+  <path d="M212 153 Q300 135 388 153 L386 142 Q300 125 214 142 Z" fill="#ef4444"/>
+
+  <!-- Title Badge -->
+  <rect x="30" y="30" width="160" height="34" rx="2" fill="#000000" fill-opacity="0.8" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="42" y="52" fill="#fee2e2" font-family="'Inter', sans-serif" font-size="12" font-weight="bold" letter-spacing="2">MONKEY D. LUFFY</text>
+  <text x="42" y="570" fill="#fca5a5" font-family="'JetBrains Mono', monospace" font-size="11" letter-spacing="3">SUN GOD NIKA // 太陽の神ニカ</text>
+</svg>

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="saitamaAura" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#ef4444" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#050505" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="headShine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffedd5"/>
+      <stop offset="60%" stop-color="#fed7aa"/>
+      <stop offset="100%" stop-color="#fdba74"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="#090805"/>
+  <circle cx="300" cy="270" r="240" fill="url(#saitamaAura)"/>
+  <circle cx="300" cy="270" r="215" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="10 6" opacity="0.35"/>
+  
+  <!-- Yellow Hero Suit + Red Gloves & White Cape -->
+  <path d="M140 540 L230 380 L300 420 L370 380 L460 540 L520 600 L80 600 Z" fill="#eab308" stroke="#ca8a04" stroke-width="2"/>
+  <!-- White Cape behind shoulders -->
+  <path d="M120 420 L220 380 L220 600 L100 600 Z" fill="#f8fafc"/>
+  <path d="M480 420 L380 380 L380 600 L500 600 Z" fill="#f8fafc"/>
+  <!-- Cape Buttons -->
+  <circle cx="230" cy="390" r="8" fill="#1e293b"/>
+  <circle cx="370" cy="390" r="8" fill="#1e293b"/>
+  <!-- Red Zipper -->
+  <line x1="300" y1="420" x2="300" y2="600" stroke="#dc2626" stroke-width="4"/>
+
+  <!-- Neck -->
+  <path d="M260 330 L340 330 L345 390 L255 390 Z" fill="#fed7aa"/>
+  
+  <!-- Perfectly Smooth Bald Head & Jaw -->
+  <ellipse cx="300" cy="220" rx="95" ry="115" fill="url(#headShine)"/>
+  <polygon points="215,240 230,330 300,370 370,330 385,240" fill="url(#headShine)"/>
+  <!-- Radiant Head Glint / Reflection -->
+  <ellipse cx="265" cy="160" rx="22" ry="12" fill="#ffffff" opacity="0.6" transform="rotate(-25 265 160)"/>
+
+  <!-- Simple Comical Poker Face / Serious Eyes -->
+  <ellipse cx="260" cy="250" rx="10" ry="7" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+  <circle cx="260" cy="250" r="3" fill="#0f172a"/>
+  <ellipse cx="340" cy="250" rx="10" ry="7" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+  <circle cx="340" cy="250" r="3" fill="#0f172a"/>
+  <!-- Small straight mouth -->
+  <line x1="285" y1="320" x2="315" y2="320" stroke="#78350f" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Title Badge -->
+  <rect x="30" y="30" width="160" height="34" rx="2" fill="#000000" fill-opacity="0.8" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="42" y="52" fill="#fef3c7" font-family="'Inter', sans-serif" font-size="12" font-weight="bold" letter-spacing="2">SAITAMA</text>
+  <text x="42" y="570" fill="#fde047" font-family="'JetBrains Mono', monospace" font-size="11" letter-spacing="3">ONE PUNCH MAN // ワンパンマン</text>
+</svg>

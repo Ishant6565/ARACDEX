@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="erenAura" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#047857" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#050505" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="erenHair" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#271c19"/>
+      <stop offset="60%" stop-color="#18110f"/>
+      <stop offset="100%" stop-color="#0c0807"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="#060807"/>
+  <circle cx="300" cy="270" r="240" fill="url(#erenAura)"/>
+  <circle cx="300" cy="270" r="215" fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="12 6" opacity="0.35"/>
+  
+  <!-- Survey Corps Long Dark Trenchcoat -->
+  <path d="M140 540 L230 380 L300 420 L370 380 L460 540 L520 600 L80 600 Z" fill="#1c1917" stroke="#10b981" stroke-width="2"/>
+  <path d="M240 390 L300 450 L360 390 Z" fill="#292524"/>
+  <!-- Key to the Basement -->
+  <line x1="300" y1="410" x2="300" y2="470" stroke="#78716c" stroke-width="2"/>
+  <polygon points="295,470 305,470 300,485" fill="#ca8a04"/>
+
+  <!-- Neck -->
+  <path d="M260 340 L340 340 L345 400 L255 400 Z" fill="#fed7aa"/>
+  
+  <!-- Face / Intense Glare -->
+  <polygon points="220,230 235,330 300,380 365,330 380,230 365,180 235,180" fill="#ffedd5"/>
+  <!-- Titan Shifter Regeneration Marks under eyes -->
+  <path d="M245 265 L240 285 L250 280 L245 295" stroke="#10b981" stroke-width="2" fill="none" opacity="0.85"/>
+  <path d="M355 265 L360 285 L350 280 L355 295" stroke="#10b981" stroke-width="2" fill="none" opacity="0.85"/>
+  <!-- Serious mouth -->
+  <line x1="275" y1="340" x2="325" y2="340" stroke="#44403c" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Glowing Emerald Titan Eyes -->
+  <polygon points="245,245 278,240 280,255 248,258" fill="#ffffff"/>
+  <circle cx="264" cy="249" r="7" fill="#10b981" stroke="#064e3b" stroke-width="1.5"/>
+  <circle cx="264" cy="249" r="3" fill="#022c22"/>
+  <polygon points="355,245 322,240 320,255 352,258" fill="#ffffff"/>
+  <circle cx="336" cy="249" r="7" fill="#10b981" stroke="#064e3b" stroke-width="1.5"/>
+  <circle cx="336" cy="249" r="3" fill="#022c22"/>
+
+  <!-- Long flowy Season 4 hair tied in bun / framing cheeks -->
+  <path d="M300 45 Q220 70 200 170 Q180 260 210 330 L235 240 L260 170 Z" fill="url(#erenHair)"/>
+  <path d="M300 45 Q380 70 400 170 Q420 260 390 330 L365 240 L340 170 Z" fill="url(#erenHair)"/>
+  <path d="M240 160 L250 260 L265 180 Z" fill="#271c19"/>
+  <path d="M360 160 L350 260 L335 180 Z" fill="#271c19"/>
+  <!-- Top hair bun -->
+  <ellipse cx="300" cy="50" rx="25" ry="15" fill="#1c1917"/>
+
+  <!-- Title Badge -->
+  <rect x="30" y="30" width="160" height="34" rx="2" fill="#000000" fill-opacity="0.8" stroke="#10b981" stroke-width="1.5"/>
+  <text x="42" y="52" fill="#d1fae5" font-family="'Inter', sans-serif" font-size="12" font-weight="bold" letter-spacing="2">EREN YEAGER</text>
+  <text x="42" y="570" fill="#6ee7b7" font-family="'JetBrains Mono', monospace" font-size="11" letter-spacing="3">THE ATTACK TITAN // 進撃の巨人</text>
+</svg>

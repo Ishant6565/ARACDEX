@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="sanjiAura" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.45"/>
+      <stop offset="60%" stop-color="#3b82f6" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#050505" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sanjiHair" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="60%" stop-color="#facc15"/>
+      <stop offset="100%" stop-color="#eab308"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="#07070a"/>
+  <circle cx="300" cy="270" r="240" fill="url(#sanjiAura)"/>
+  <circle cx="300" cy="270" r="215" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="6 8" opacity="0.35"/>
+  
+  <!-- Sleek Black Double-Breasted Suit -->
+  <path d="M140 540 L230 370 L300 410 L370 370 L460 540 L520 600 L80 600 Z" fill="#0f172a" stroke="#3b82f6" stroke-width="2"/>
+  <!-- Blue dress shirt & Black Tie -->
+  <path d="M250 380 L300 440 L350 380 Z" fill="#1e3a8a"/>
+  <polygon points="295,400 305,400 308,480 292,480" fill="#020617"/>
+  <!-- Gold Double Buttons -->
+  <circle cx="270" cy="460" r="6" fill="#fbbf24"/>
+  <circle cx="330" cy="460" r="6" fill="#fbbf24"/>
+
+  <!-- Neck -->
+  <path d="M260 330 L340 330 L345 390 L255 390 Z" fill="#fed7aa"/>
+  
+  <!-- Face / Jaw with stylish stubble goatee -->
+  <polygon points="220,220 235,320 300,370 365,320 380,220 365,170 235,170" fill="#ffedd5"/>
+  <!-- Stubble Goatee -->
+  <path d="M285 355 L300 370 L315 355 Z" fill="#713f12" opacity="0.8"/>
+  <circle cx="295" cy="358" r="1" fill="#713f12"/>
+  <circle cx="305" cy="358" r="1" fill="#713f12"/>
+
+  <!-- Cigarette in mouth with smoke curl -->
+  <line x1="315" y1="335" x2="365" y2="345" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+  <line x1="360" y1="344" x2="368" y2="346" stroke="#f97316" stroke-width="4"/>
+  <path d="M370 345 Q385 330 380 310 Q395 300 405 280" stroke="#94a3b8" stroke-width="2" fill="none" opacity="0.6"/>
+
+  <!-- Exposed Right Eye with signature Spiral Curly Eyebrow -->
+  <polygon points="325,235 355,232 350,246 325,248" fill="#ffffff"/>
+  <circle cx="338" cy="240" r="6" fill="#0284c7"/>
+  <!-- Spiral Eyebrow -->
+  <path d="M320 225 Q340 220 355 224 Q365 220 362 215 Q355 215 357 222" stroke="#713f12" stroke-width="2.5" fill="none"/>
+
+  <!-- Sleek Golden Blond Hair swept completely over Left Eye -->
+  <path d="M300 40 Q220 80 200 180 Q190 260 210 320 L240 250 L250 180 L300 120 Z" fill="url(#sanjiHair)"/>
+  <path d="M300 40 Q380 80 400 180 L380 260 L360 210 L350 160 Z" fill="url(#sanjiHair)"/>
+  <!-- Long bangs concealing left half of face -->
+  <path d="M220 120 Q260 200 270 300 L240 220 Z" fill="#fef08a"/>
+  <path d="M260 130 Q290 230 300 280 L280 180 Z" fill="#facc15"/>
+
+  <!-- Title Badge -->
+  <rect x="30" y="30" width="160" height="34" rx="2" fill="#000000" fill-opacity="0.8" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="42" y="52" fill="#e0f2fe" font-family="'Inter', sans-serif" font-size="12" font-weight="bold" letter-spacing="2">VINSMOKE SANJI</text>
+  <text x="42" y="570" fill="#93c5fd" font-family="'JetBrains Mono', monospace" font-size="11" letter-spacing="3">BLACK LEG // 黒足のサンジ</text>
+</svg>

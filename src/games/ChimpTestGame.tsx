@@ -1,14 +1,21 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { sound } from '../services/audio';
-import { recordGameWin } from '../services/storage';
-import { RotateCcw, Brain, Award, AlertCircle } from 'lucide-react';
+import { recordGameWin, getGameLevel, setGameLevel } from '../services/storage';
+import { RotateCcw, Brain, Award, AlertCircle, Layers, Trophy, CheckCircle } from 'lucide-react';
 
 const GRID_ROWS = 6;
 const GRID_COLS = 5;
 const TOTAL_CELLS = GRID_ROWS * GRID_COLS;
 
 export const ChimpTestGame: React.FC<{ onComplete?: (score: number) => void }> = ({ onComplete }) => {
-  const [level, setLevel] = useState<number>(4); // number of tiles (4 to 12)
+  const [level, setLevel] = useState<number>(() => getGameLevel('chimp'));
+  const [showLevelPicker, setShowLevelPicker] = useState<boolean>(false);
+
+  // Tiles count scales from 4 (Level 1) to 22 (Level 100)
+  const tileCountForLevel = useMemo(() => {
+    return Math.min(22, 4 + Math.floor((level - 1) * 0.18));
+  }, [level]);
+
   const [tiles, setTiles] = useState<(number | null)[]>(Array(TOTAL_CELLS).fill(null));
   const [nextExpected, setNextExpected] = useState<number>(1);
   const [isMasked, setIsMasked] = useState<boolean>(false);
@@ -16,9 +23,9 @@ export const ChimpTestGame: React.FC<{ onComplete?: (score: number) => void }> =
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [victory, setVictory] = useState<boolean>(false);
 
-  const startRound = useCallback((targetLevel: number) => {
+  const startRound = useCallback((targetCount: number) => {
     const indices: number[] = [];
-    while (indices.length < targetLevel) {
+    while (indices.length < targetCount) {
       const idx = Math.floor(Math.random() * TOTAL_CELLS);
       if (!indices.includes(idx)) indices.push(idx);
     }
@@ -31,11 +38,13 @@ export const ChimpTestGame: React.FC<{ onComplete?: (score: number) => void }> =
     setTiles(newTiles);
     setNextExpected(1);
     setIsMasked(false);
+    setGameOver(false);
+    setVictory(false);
   }, []);
 
   useEffect(() => {
-    startRound(4);
-  }, [startRound]);
+    startRound(tileCountForLevel);
+  }, [tileCountForLevel, startRound]);
 
   const handleCellClick = (val: number | null, index: number) => {
     if (val === null || gameOver || victory) return;
@@ -52,128 +61,221 @@ export const ChimpTestGame: React.FC<{ onComplete?: (score: number) => void }> =
       newTiles[index] = null;
       setTiles(newTiles);
 
-      if (val === level) {
+      if (val === tileCountForLevel) {
         // Completed this level!
         sound.playSuccess();
-        if (level >= 10) {
-          setVictory(true);
-          recordGameWin('chimp', level);
-          onComplete?.(level);
-        } else {
-          const nextLvl = level + 1;
-          setLevel(nextLvl);
-          recordGameWin('chimp', level);
-          setTimeout(() => startRound(nextLvl), 600);
-        }
+        setVictory(true);
+        const score = 100 * level + tileCountForLevel * 20;
+        recordGameWin('chimp', score, 'CHIMP TEST', level);
+        onComplete?.(score);
       } else {
         setNextExpected(val + 1);
       }
     } else {
       // Wrong click
-      sound.playError();
       const newStrikes = strikes + 1;
       setStrikes(newStrikes);
       if (newStrikes >= 3) {
+        sound.playDefeat();
         setGameOver(true);
       } else {
+        sound.playError();
         // Re-show tiles and restart level
         setIsMasked(false);
-        setTimeout(() => startRound(level), 900);
+        setTimeout(() => startRound(tileCountForLevel), 900);
       }
     }
   };
 
-  const restartAll = () => {
+  const advanceNextLevel = () => {
     sound.playClick();
-    setLevel(4);
+    const nextLvl = Math.min(100, level + 1);
+    setLevel(nextLvl);
+    setGameLevel('chimp', nextLvl);
     setStrikes(0);
-    setGameOver(false);
-    setVictory(false);
-    startRound(4);
+  };
+
+  const selectLevel = (targetLvl: number) => {
+    sound.playClick();
+    setLevel(targetLvl);
+    setGameLevel('chimp', targetLvl);
+    setShowLevelPicker(false);
+    setStrikes(0);
+  };
+
+  const restartCurrentLevel = () => {
+    sound.playClick();
+    setStrikes(0);
+    startRound(tileCountForLevel);
   };
 
   return (
     <div className="flex flex-col items-center w-full max-w-md mx-auto select-none">
       {/* Header */}
-      <div className="flex items-center justify-between w-full mb-4 pb-3 border-b border-white/[0.08]">
+      <div className="flex items-center justify-between w-full mb-3 pb-3 border-b border-white/[0.08]">
         <div>
-          <span className="text-[10px] tracking-[0.25em] text-white/40 uppercase font-mono block">PROTOCOL 04</span>
+          <span className="text-[10px] tracking-[0.25em] text-cyan-400 uppercase font-mono block">PROTOCOL 04</span>
           <h2 className="text-2xl font-bold font-display tracking-tight text-white flex items-center gap-2">
-            CHIMP MEMORY <span className="text-xs font-mono font-normal px-2 py-0.5 rounded-[2px] bg-white/[0.06] text-white/60">AYUMU</span>
+            CHIMP TEST <span className="text-xs font-mono font-normal px-2 py-0.5 rounded-[2px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">100 LVLS</span>
           </h2>
         </div>
 
-        <div className="flex items-center gap-3 font-mono">
+        <div className="flex items-center gap-2 font-mono">
+          <button
+            onClick={() => setShowLevelPicker(true)}
+            className="px-2.5 py-1 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-[2px] text-right cursor-pointer transition-all"
+            title="Select from 100 levels"
+          >
+            <span className="text-[9px] text-cyan-400 uppercase block font-bold flex items-center gap-1">
+              <Layers className="w-2.5 h-2.5" /> LEVEL
+            </span>
+            <span className="text-sm font-bold text-cyan-400">{level}/100</span>
+          </button>
           <div className="px-3 py-1 bg-[#0a0a0a] border border-white/[0.08] rounded-[2px] text-right">
-            <span className="text-[9px] text-white/40 uppercase block tracking-wider">LEVEL</span>
-            <span className="text-sm font-bold text-amber-400">{level} TILES</span>
-          </div>
-          <div className="px-3 py-1 bg-[#0a0a0a] border border-white/[0.08] rounded-[2px] text-right">
-            <span className="text-[9px] text-white/40 uppercase block tracking-wider">STRIKES</span>
-            <span className="text-sm font-bold text-red-400">{strikes}/3</span>
+            <span className="text-[9px] text-white/40 uppercase block">TARGET</span>
+            <span className="text-sm font-bold text-cyan-400">{tileCountForLevel} TILES</span>
           </div>
           <button
-            onClick={restartAll}
-            className="p-2 text-white/60 hover:text-white bg-[#0d0d0d] border border-white/[0.08] rounded-[2px]"
+            onClick={restartCurrentLevel}
+            className="p-1.5 text-white/60 hover:text-white bg-[#0d0d0d] border border-white/[0.08] rounded-[2px]"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      <p className="text-xs font-mono text-white/50 mb-3 w-full text-left">
-        Memorize positions. Click 1, then tap remaining masked blocks in ascending sequence.
-      </p>
-
-      {/* Grid 6x5 */}
-      <div className="relative p-3 bg-[#070707] border border-white/20 rounded-[2px] grid grid-cols-5 gap-2 w-full aspect-[5/6] shadow-2xl">
-        {tiles.map((val, idx) => (
-          <button
-            key={idx}
-            onClick={() => handleCellClick(val, idx)}
-            disabled={val === null}
-            className={`flex items-center justify-center font-mono text-lg font-bold border rounded-[2px] transition-all ${
-              val !== null
-                ? isMasked
-                  ? 'bg-white text-transparent border-white hover:bg-neutral-200'
-                  : 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.2)]'
-                : 'bg-[#0d0d0d] border-transparent cursor-default'
-            }`}
-          >
-            {val !== null ? (isMasked ? '' : val) : ''}
-          </button>
-        ))}
-
-        {gameOver && (
-          <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in z-20">
-            <AlertCircle className="w-10 h-10 text-red-400 mb-3" />
-            <span className="text-xs font-mono tracking-[0.25em] text-red-400 uppercase mb-1">CAPACITY REACHED</span>
-            <h3 className="text-2xl font-display font-bold text-white mb-2">WORKING MEMORY: LVL {level}</h3>
-            <p className="text-xs font-mono text-white/50 mb-6">Primate benchmark baseline surpassed.</p>
-            <button
-              onClick={restartAll}
-              className="px-6 py-2.5 bg-white text-black font-mono font-bold text-xs uppercase tracking-widest hover:bg-neutral-200 transition-all rounded-[2px]"
-            >
-              TRY AGAIN
-            </button>
-          </div>
-        )}
-
-        {victory && (
-          <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in z-20">
-            <Award className="w-10 h-10 text-amber-400 mb-3" />
-            <span className="text-xs font-mono tracking-[0.25em] text-amber-400 uppercase mb-1">PRODIGY STATUS</span>
-            <h3 className="text-2xl font-display font-bold text-white mb-2">LEVEL 10 MASTERED</h3>
-            <p className="text-xs font-mono text-white/50 mb-6">Exceptional spatial working memory recorded.</p>
-            <button
-              onClick={restartAll}
-              className="px-6 py-2.5 bg-amber-400 text-black font-mono font-bold text-xs uppercase tracking-widest hover:bg-amber-300 transition-all rounded-[2px]"
-            >
-              PLAY AGAIN
-            </button>
-          </div>
-        )}
+      {/* Strikes indicator */}
+      <div className="flex items-center justify-between w-full mb-3 text-xs font-mono text-white/50">
+        <span className="flex items-center gap-1">
+          MEMORY LOAD: <span className="text-cyan-400 font-bold">{Math.round((tileCountForLevel / 30) * 100)}% OCCUPANCY</span>
+        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-white/40">STRIKES:</span>
+          {[1, 2, 3].map(s => (
+            <div
+              key={s}
+              className={`w-2.5 h-2.5 rounded-full ${
+                s <= strikes ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'bg-[#222]'
+              }`}
+            />
+          ))}
+        </div>
       </div>
+
+      {/* Grid Canvas */}
+      <div className="relative grid grid-cols-5 grid-rows-6 gap-1.5 p-2 bg-[#070707] border border-cyan-500/30 rounded-[2px] w-full aspect-[5/6] max-w-[340px] shadow-[0_0_30px_rgba(6,182,212,0.12)]">
+        {tiles.map((val, idx) => {
+          if (val === null) {
+            return <div key={idx} className="w-full h-full bg-transparent rounded-[2px]" />;
+          }
+
+          return (
+            <button
+              key={idx}
+              onClick={() => handleCellClick(val, idx)}
+              className={`w-full h-full flex items-center justify-center font-display font-bold text-lg rounded-[2px] transition-all border ${
+                isMasked
+                  ? 'bg-[#181818] border-cyan-500/40 hover:bg-cyan-500/20 text-transparent shadow-md'
+                  : 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]'
+              }`}
+            >
+              {!isMasked && val}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Victory Banner */}
+      {victory && (
+        <div className="mt-4 p-4 bg-cyan-500/10 border border-cyan-400/50 rounded-[2px] w-full max-w-[340px] text-center font-mono text-xs text-white">
+          <div className="flex items-center justify-center gap-2 mb-2 font-bold text-cyan-400">
+            <CheckCircle className="w-4 h-4 text-cyan-400" /> LEVEL {level} RECALLED PERFECTLY!
+          </div>
+          <p className="text-white/60 mb-3">CONQUERED {tileCountForLevel} NUMERIC GLYPHS IN SPATIAL MATRIX.</p>
+          <div className="flex gap-2">
+            <button
+              onClick={restartCurrentLevel}
+              className="flex-1 py-2 border border-white/20 text-white font-mono text-xs uppercase hover:bg-white/10 rounded-[2px]"
+            >
+              REPLAY
+            </button>
+            <button
+              onClick={advanceNextLevel}
+              className="flex-1 py-2 bg-cyan-400 text-black font-mono font-bold text-xs uppercase hover:bg-cyan-300 rounded-[2px] shadow-[0_0_15px_rgba(6,182,212,0.5)]"
+            >
+              NEXT LEVEL ({level < 100 ? level + 1 : 100})
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Game Over Banner */}
+      {gameOver && (
+        <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-[2px] w-full max-w-[340px] text-center font-mono text-xs text-white">
+          <div className="text-red-400 font-bold mb-2">3 STRIKES REACHED</div>
+          <p className="text-white/60 mb-3">LEVEL {level} EXCEEDED WORKING MEMORY THRESHOLD.</p>
+          <button
+            onClick={restartCurrentLevel}
+            className="px-6 py-2 bg-white text-black font-bold uppercase rounded-[2px]"
+          >
+            RETRY LEVEL {level}
+          </button>
+        </div>
+      )}
+
+      {/* 100 Levels Picker Modal */}
+      {showLevelPicker && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-md animate-fade-in p-3 sm:p-6">
+          <div className="min-h-full flex items-center justify-center py-4">
+            <div className="bg-[#0b0b0b] border border-cyan-500/40 rounded-[2px] p-5 sm:p-6 max-w-md w-full max-h-[85vh] flex flex-col shadow-[0_0_40px_rgba(6,182,212,0.2)] overflow-hidden my-auto">
+              <div className="flex items-center justify-between pb-3 border-b border-white/[0.08] mb-4 shrink-0">
+                <div>
+                  <span className="text-[10px] font-mono text-cyan-400 tracking-widest uppercase block">// ARCHIVAL SELECTION</span>
+                  <h3 className="text-xl font-display font-bold text-white flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-cyan-400" /> SELECT CHIMP LEVEL
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowLevelPicker(false)}
+                  className="px-2.5 py-1 text-xs font-mono text-white/50 hover:text-white border border-white/10 rounded-[2px]"
+                >
+                  ESC
+                </button>
+              </div>
+
+              <p className="text-xs font-mono text-white/60 mb-3 shrink-0">
+                100 progressive spatial memory levels (scaling up to 22 obscured numeric tiles).
+              </p>
+
+              <div className="grid grid-cols-10 gap-1.5 overflow-y-auto pr-1 py-1 max-h-[50vh] font-mono text-xs flex-1 min-h-0">
+                {Array.from({ length: 100 }, (_, i) => i + 1).map(lvl => (
+                  <button
+                    key={lvl}
+                    onClick={() => selectLevel(lvl)}
+                    className={`h-9 rounded-[2px] flex items-center justify-center text-xs font-bold border transition-all ${
+                      level === lvl
+                        ? 'bg-cyan-400 text-black border-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.7)]'
+                        : 'bg-[#141414] text-white/70 hover:text-white border-white/[0.08] hover:border-cyan-400/50'
+                    }`}
+                  >
+                    {lvl}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-white/[0.08] flex justify-between items-center text-xs font-mono text-white/40 shrink-0">
+                <span>ACTIVE: LEVEL {level}</span>
+                <button
+                  onClick={() => setShowLevelPicker(false)}
+                  className="px-4 py-1.5 bg-white text-black font-bold uppercase rounded-[2px]"
+                >
+                  CLOSE
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

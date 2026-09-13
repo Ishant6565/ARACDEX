@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="rengokuAura" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.6"/>
+      <stop offset="60%" stop-color="#dc2626" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#050505" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="flameHair" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#facc15"/>
+      <stop offset="60%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="#0a0605"/>
+  <circle cx="300" cy="270" r="240" fill="url(#rengokuAura)"/>
+  <circle cx="300" cy="270" r="215" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="10 6" opacity="0.4"/>
+  
+  <!-- Demon Slayer Uniform + Flame Pattern White Haori -->
+  <path d="M140 540 L230 380 L300 420 L370 380 L460 540 L520 600 L80 600 Z" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+  <!-- Flame tongues on Haori bottom -->
+  <polygon points="180,560 210,500 240,560 270,490 300,560 330,490 360,560 390,500 420,560" fill="#dc2626"/>
+  <polygon points="190,560 210,515 230,560 280,510 300,560 320,510 370,515 390,560" fill="#fbbf24"/>
+
+  <!-- Neck -->
+  <path d="M260 340 L340 340 L345 400 L255 400 Z" fill="#fed7aa"/>
+  
+  <!-- Face / Enthusiastic Noble Jaw -->
+  <polygon points="220,230 235,330 300,380 365,330 380,230 365,180 235,180" fill="#ffedd5"/>
+  <!-- Wide Radiant Smile -->
+  <path d="M260 335 Q300 360 340 335" stroke="#991b1b" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Distinctive Thick Forked Eyebrows with Red Tips -->
+  <polygon points="230,225 275,215 265,235" fill="#000000"/>
+  <polygon points="265,220 280,215 275,230" fill="#dc2626"/>
+  <polygon points="370,225 325,215 335,235" fill="#000000"/>
+  <polygon points="335,220 320,215 325,230" fill="#dc2626"/>
+
+  <!-- Golden Fiery Eyes -->
+  <polygon points="245,245 278,240 280,255 248,258" fill="#ffffff"/>
+  <circle cx="264" cy="249" r="7" fill="#fbbf24" stroke="#dc2626" stroke-width="2"/>
+  <polygon points="355,245 322,240 320,255 352,258" fill="#ffffff"/>
+  <circle cx="336" cy="249" r="7" fill="#fbbf24" stroke="#dc2626" stroke-width="2"/>
+
+  <!-- Majestic Wild Mane of Flame Hair -->
+  <path d="M300 35 L260 110 L210 50 L215 140 L160 90 L180 180 L140 160 L165 240 L210 200 Z" fill="url(#flameHair)"/>
+  <path d="M300 35 L340 110 L390 50 L385 140 L440 90 L420 180 L460 160 L435 240 L390 200 Z" fill="url(#flameHair)"/>
+  <path d="M280 120 L300 170 L320 120 Z" fill="#fef08a"/>
+
+  <!-- Title Badge -->
+  <rect x="30" y="30" width="160" height="34" rx="2" fill="#000000" fill-opacity="0.8" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="42" y="52" fill="#fef3c7" font-family="'Inter', sans-serif" font-size="12" font-weight="bold" letter-spacing="2">KYOUJURO RENGOKU</text>
+  <text x="42" y="570" fill="#fbbf24" font-family="'JetBrains Mono', monospace" font-size="11" letter-spacing="3">FLAME HASHIRA // 炎柱・煉獄杏寿郎</text>
+</svg>

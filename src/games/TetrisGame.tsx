@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { sound } from '../services/audio';
-import { recordGameWin } from '../services/storage';
-import { RotateCcw, Play, Pause, ArrowDown, ArrowLeft, ArrowRight, RotateCw, Zap } from 'lucide-react';
+import { recordGameWin, getGameLevel, setGameLevel } from '../services/storage';
+import { RotateCcw, ArrowLeft, ArrowRight, RotateCw, Zap, Layers, Trophy, CheckCircle } from 'lucide-react';
 
 const COLS = 10;
 const ROWS = 20;
 
 const TETROMINOES: Record<string, { shape: number[][]; color: string }> = {
-  I: { shape: [[1, 1, 1, 1]], color: '#38bdf8' },
-  O: { shape: [[1, 1], [1, 1]], color: '#fbbf24' },
+  I: { shape: [[1, 1, 1, 1]], color: '#22d3ee' },
+  O: { shape: [[1, 1], [1, 1]], color: '#38bdf8' },
   T: { shape: [[0, 1, 0], [1, 1, 1]], color: '#c084fc' },
   S: { shape: [[0, 1, 1], [1, 1, 0]], color: '#4ade80' },
   Z: { shape: [[1, 1, 0], [0, 1, 1]], color: '#f87171' },
   J: { shape: [[1, 0, 0], [1, 1, 1]], color: '#60a5fa' },
-  L: { shape: [[0, 0, 1], [1, 1, 1]], color: '#fb923c' },
+  L: { shape: [[0, 0, 1], [1, 1, 1]], color: '#06b6d4' },
 };
 
 type Piece = {
@@ -30,9 +30,12 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
   const [currentPiece, setCurrentPiece] = useState<Piece | null>(null);
   const [score, setScore] = useState<number>(0);
   const [lines, setLines] = useState<number>(0);
-  const [level, setLevel] = useState<number>(1);
+  const [level, setLevel] = useState<number>(() => getGameLevel('tetris'));
+  const [linesInLevel, setLinesInLevel] = useState<number>(0);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [showLevelPicker, setShowLevelPicker] = useState<boolean>(false);
+  const [levelClearedMessage, setLevelClearedMessage] = useState<boolean>(false);
 
   // Keep references to prevent stale closures
   const gridRef = useRef<string[][]>(grid);
@@ -84,7 +87,7 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
     return rotated;
   };
 
-  // Synchronous atomic lock function (Zero lag, zero race conditions)
+  // Synchronous atomic lock function
   const lockPieceAndAdvance = useCallback((pieceToLock: Piece, currentGrid: string[][]) => {
     sound.playDrop();
 
@@ -118,14 +121,26 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
       const points = [0, 100, 300, 500, 800][clearedLines] * level;
       setScore(s => {
         const newScore = s + points;
-        recordGameWin('tetris', newScore);
-        onComplete?.(newScore);
         return newScore;
       });
-      setLines(l => {
-        const newLines = l + clearedLines;
-        setLevel(Math.floor(newLines / 10) + 1);
-        return newLines;
+      setLines(l => l + clearedLines);
+      
+      setLinesInLevel(curr => {
+        const nextLines = curr + clearedLines;
+        // 2 lines needed per level to advance (or 100 levels progression)
+        if (nextLines >= 2) {
+          setLevel(prevLvl => {
+            const nextLvl = Math.min(100, prevLvl + 1);
+            setGameLevel('tetris', nextLvl);
+            recordGameWin('tetris', score + points, 'TETRIS MATRIX', prevLvl);
+            onComplete?.(score + points);
+            setLevelClearedMessage(true);
+            setTimeout(() => setLevelClearedMessage(false), 2000);
+            return nextLvl;
+          });
+          return 0;
+        }
+        return nextLines;
       });
     }
 
@@ -134,15 +149,15 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
 
     const nextPiece = getRandomPiece();
     if (checkCollision(nextPiece, filteredGrid)) {
-      sound.playError();
+      sound.playDefeat();
       setIsGameOver(true);
       setCurrentPiece(null);
     } else {
       setCurrentPiece(nextPiece);
     }
-  }, [level, onComplete]);
+  }, [level, score, onComplete]);
 
-  // Instant Hard Drop (Guaranteed atomic lock)
+  // Instant Hard Drop
   const hardDrop = useCallback(() => {
     const piece = pieceRef.current;
     const currentGrid = gridRef.current;
@@ -156,7 +171,7 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
     lockPieceAndAdvance(finalPiece, currentGrid);
   }, [lockPieceAndAdvance]);
 
-  // Calculate Ghost Piece position (where it will land)
+  // Calculate Ghost Piece position
   const getGhostY = (): number => {
     if (!currentPiece) return 0;
     let offset = 0;
@@ -174,20 +189,28 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
     setCurrentPiece(getRandomPiece());
     setScore(0);
     setLines(0);
-    setLevel(1);
+    setLinesInLevel(0);
     setIsGameOver(false);
     setIsPaused(false);
   }, []);
+
+  const selectSpecificLevel = (targetLvl: number) => {
+    sound.playClick();
+    setLevel(targetLvl);
+    setGameLevel('tetris', targetLvl);
+    setShowLevelPicker(false);
+    resetGame();
+  };
 
   useEffect(() => {
     resetGame();
   }, [resetGame]);
 
-  // Gravity interval
+  // Gravity interval scales smoothly from level 1 (700ms) to level 100 (60ms)
   useEffect(() => {
-    if (isGameOver || isPaused || !currentPiece) return;
+    if (isGameOver || isPaused || showLevelPicker || !currentPiece) return;
 
-    const dropSpeed = Math.max(80, 650 - (level - 1) * 55);
+    const dropSpeed = Math.max(60, 700 - (level - 1) * 6.5);
     const interval = setInterval(() => {
       const piece = pieceRef.current;
       const currentGrid = gridRef.current;
@@ -201,71 +224,63 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
     }, dropSpeed);
 
     return () => clearInterval(interval);
-  }, [currentPiece, isGameOver, isPaused, level, lockPieceAndAdvance]);
+  }, [level, isGameOver, isPaused, showLevelPicker, currentPiece, lockPieceAndAdvance]);
 
-  // Movement controls
   const moveLeft = () => {
-    const piece = pieceRef.current;
-    if (!piece || isGameOver || isPaused) return;
-    if (!checkCollision(piece, grid, -1, 0)) {
-      sound.playSlide();
-      setCurrentPiece(p => (p ? { ...p, x: p.x - 1 } : null));
+    if (!currentPiece || isGameOver || isPaused) return;
+    if (!checkCollision(currentPiece, grid, -1, 0)) {
+      sound.playMove();
+      setCurrentPiece({ ...currentPiece, x: currentPiece.x - 1 });
     }
   };
 
   const moveRight = () => {
-    const piece = pieceRef.current;
-    if (!piece || isGameOver || isPaused) return;
-    if (!checkCollision(piece, grid, 1, 0)) {
-      sound.playSlide();
-      setCurrentPiece(p => (p ? { ...p, x: p.x + 1 } : null));
+    if (!currentPiece || isGameOver || isPaused) return;
+    if (!checkCollision(currentPiece, grid, 1, 0)) {
+      sound.playMove();
+      setCurrentPiece({ ...currentPiece, x: currentPiece.x + 1 });
     }
   };
 
   const moveDown = () => {
-    const piece = pieceRef.current;
-    if (!piece || isGameOver || isPaused) return;
-    if (!checkCollision(piece, grid, 0, 1)) {
-      setCurrentPiece(p => (p ? { ...p, y: p.y + 1 } : null));
-    } else {
-      lockPieceAndAdvance(piece, grid);
+    if (!currentPiece || isGameOver || isPaused) return;
+    if (!checkCollision(currentPiece, grid, 0, 1)) {
+      sound.playMove();
+      setCurrentPiece({ ...currentPiece, y: currentPiece.y + 1 });
     }
   };
 
   const rotate = () => {
-    const piece = pieceRef.current;
-    if (!piece || isGameOver || isPaused) return;
-    const newShape = rotatePiece(piece);
-    const testPiece = { ...piece, shape: newShape };
-    if (!checkCollision(testPiece, grid)) {
-      sound.playClick();
-      setCurrentPiece(testPiece);
+    if (!currentPiece || isGameOver || isPaused) return;
+    const rotated = rotatePiece(currentPiece);
+    if (!checkCollision({ ...currentPiece, shape: rotated }, grid)) {
+      sound.playRotate();
+      setCurrentPiece({ ...currentPiece, shape: rotated });
     }
   };
 
-  // Keyboard events
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (['ArrowLeft', 'KeyA'].includes(e.code)) {
+      if (showLevelPicker) return;
+
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) {
         e.preventDefault();
+      }
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
         moveLeft();
-      } else if (['ArrowRight', 'KeyD'].includes(e.code)) {
-        e.preventDefault();
+      } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
         moveRight();
-      } else if (['ArrowDown', 'KeyS'].includes(e.code)) {
-        e.preventDefault();
+      } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
         moveDown();
-      } else if (['ArrowUp', 'KeyW'].includes(e.code)) {
-        e.preventDefault();
+      } else if (e.code === 'ArrowUp' || e.code === 'KeyW') {
         rotate();
       } else if (e.code === 'Space') {
-        e.preventDefault();
         hardDrop();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hardDrop]);
+  }, [hardDrop, showLevelPicker]);
 
   const ghostY = getGhostY();
 
@@ -274,20 +289,26 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
       {/* Header */}
       <div className="flex items-center justify-between w-full mb-3 pb-3 border-b border-white/[0.08]">
         <div>
-          <span className="text-[10px] tracking-[0.25em] text-white/40 uppercase font-mono block">PROTOCOL 02</span>
+          <span className="text-[10px] tracking-[0.25em] text-cyan-400 uppercase font-mono block">PROTOCOL 02</span>
           <h2 className="text-2xl font-bold font-display tracking-tight text-white flex items-center gap-2">
-            TETRIS <span className="text-xs font-mono font-normal px-2 py-0.5 rounded-[2px] bg-white/[0.06] text-white/60">MONOLITH</span>
+            TETRIS <span className="text-xs font-mono font-normal px-2 py-0.5 rounded-[2px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">100 LVLS</span>
           </h2>
         </div>
 
         <div className="flex items-center gap-2 font-mono">
+          <button
+            onClick={() => setShowLevelPicker(true)}
+            className="px-2 py-1 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-[2px] text-right cursor-pointer group transition-all"
+            title="Choose from 100 Levels"
+          >
+            <span className="text-[9px] text-cyan-400 uppercase block font-bold flex items-center gap-1">
+              <Layers className="w-2.5 h-2.5" /> LEVEL
+            </span>
+            <span className="text-sm font-bold text-cyan-400">{level}/100</span>
+          </button>
           <div className="px-2.5 py-1 bg-[#0a0a0a] border border-white/[0.08] rounded-[2px] text-right">
             <span className="text-[9px] text-white/40 uppercase block">SCORE</span>
-            <span className="text-sm font-bold text-amber-400">{score}</span>
-          </div>
-          <div className="px-2.5 py-1 bg-[#0a0a0a] border border-white/[0.08] rounded-[2px] text-right">
-            <span className="text-[9px] text-white/40 uppercase block">LINES</span>
-            <span className="text-sm font-bold text-white">{lines}</span>
+            <span className="text-sm font-bold text-cyan-400">{score}</span>
           </div>
           <button
             onClick={resetGame}
@@ -298,8 +319,19 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
         </div>
       </div>
 
+      {/* Level notification banner */}
+      {levelClearedMessage && (
+        <div className="w-full mb-2 px-3 py-1.5 bg-cyan-500/10 border border-cyan-400/40 text-cyan-300 font-mono text-xs flex items-center justify-between rounded-[2px] animate-pulse">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-3.5 h-3.5 text-cyan-400" />
+            <span>LEVEL PROMOTED! NOW LVL {level}</span>
+          </div>
+          <span className="text-[10px] uppercase text-cyan-400 font-bold">VELOCITY +</span>
+        </div>
+      )}
+
       {/* Tetris Board Matrix */}
-      <div className="relative p-1 bg-[#070707] border border-white/20 rounded-[2px] grid grid-cols-10 grid-rows-20 gap-0.5 w-60 aspect-[10/20] shadow-2xl overflow-hidden">
+      <div className="relative p-1 bg-[#070707] border border-cyan-500/20 rounded-[2px] grid grid-cols-10 grid-rows-20 gap-0.5 w-60 aspect-[10/20] shadow-[0_0_25px_rgba(6,182,212,0.15)] overflow-hidden">
         {grid.map((row, r) =>
           row.map((color, c) => {
             let activeColor = color;
@@ -339,7 +371,7 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
                   activeColor
                     ? 'border border-white/20 shadow-sm'
                     : isGhost
-                    ? 'border border-dashed border-white/30 bg-white/[0.03]'
+                    ? 'border border-dashed border-cyan-400/30 bg-cyan-500/[0.03]'
                     : 'bg-[#0e0e0e] border border-white/[0.03]'
                 }`}
                 style={{ backgroundColor: activeColor || undefined }}
@@ -351,11 +383,12 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
         {isGameOver && (
           <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-30">
             <span className="text-[10px] font-mono tracking-widest text-red-400 uppercase mb-1">GRID SATURATED</span>
-            <h3 className="text-xl font-display font-bold text-white mb-2">SEQUENCE TERMINATED</h3>
+            <h3 className="text-xl font-display font-bold text-white mb-1">SEQUENCE TERMINATED</h3>
+            <p className="text-xs font-mono text-cyan-400 mb-1">LEVEL REACHED: {level} / 100</p>
             <p className="text-xs font-mono text-white/50 mb-4">TOTAL SCORE: {score}</p>
             <button
               onClick={resetGame}
-              className="px-4 py-2 bg-white text-black font-mono font-bold text-xs uppercase rounded-[2px]"
+              className="px-4 py-2 bg-cyan-400 hover:bg-cyan-300 text-black font-mono font-bold text-xs uppercase rounded-[2px] shadow-[0_0_15px_rgba(6,182,212,0.4)]"
             >
               PLAY AGAIN
             </button>
@@ -363,40 +396,106 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
         )}
       </div>
 
+      {/* Progress to next level bar */}
+      <div className="w-60 mt-2 flex items-center justify-between text-[10px] font-mono text-white/50">
+        <span>LVL {level} REQ: 2 LINES</span>
+        <span className="text-cyan-400 font-bold">{linesInLevel}/2 CLEARED</span>
+      </div>
+      <div className="w-60 h-1 bg-[#151515] border border-white/[0.08] mt-1 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-cyan-400 transition-all duration-300 shadow-[0_0_8px_rgba(6,182,212,0.8)]"
+          style={{ width: `${(linesInLevel / 2) * 100}%` }}
+        />
+      </div>
+
       {/* Control Buttons (Left, Rotate, Right, Hard Drop) */}
-      <div className="grid grid-cols-4 gap-2 mt-4 w-60">
+      <div className="grid grid-cols-4 gap-2 mt-3 w-60">
         <button
           onClick={moveLeft}
-          className="p-3 bg-[#0d0d0d] active:bg-[#252525] border border-white/[0.1] rounded-[2px] flex items-center justify-center text-white"
+          className="p-3 bg-[#0d0d0d] active:bg-[#252525] border border-white/[0.1] rounded-[2px] flex items-center justify-center text-white hover:border-cyan-500/40"
           title="Move Left (A / Left)"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
         <button
           onClick={rotate}
-          className="p-3 bg-[#0d0d0d] active:bg-[#252525] border border-white/[0.1] rounded-[2px] flex items-center justify-center text-white"
+          className="p-3 bg-[#0d0d0d] active:bg-[#252525] border border-white/[0.1] rounded-[2px] flex items-center justify-center text-white hover:border-cyan-500/40"
           title="Rotate (W / Up)"
         >
           <RotateCw className="w-4 h-4" />
         </button>
         <button
           onClick={moveRight}
-          className="p-3 bg-[#0d0d0d] active:bg-[#252525] border border-white/[0.1] rounded-[2px] flex items-center justify-center text-white"
+          className="p-3 bg-[#0d0d0d] active:bg-[#252525] border border-white/[0.1] rounded-[2px] flex items-center justify-center text-white hover:border-cyan-500/40"
           title="Move Right (D / Right)"
         >
           <ArrowRight className="w-4 h-4" />
         </button>
         <button
           onClick={hardDrop}
-          className="p-3 bg-amber-400 text-black active:bg-amber-300 border border-amber-300 rounded-[2px] flex items-center justify-center font-bold shadow-[0_0_12px_rgba(245,158,11,0.5)]"
+          className="p-3 bg-cyan-400 text-black active:bg-cyan-300 border border-cyan-300 rounded-[2px] flex items-center justify-center font-bold shadow-[0_0_12px_rgba(34,211,238,0.5)]"
           title="INSTANT HARD DROP (Spacebar)"
         >
           <Zap className="w-4 h-4 fill-black" />
         </button>
       </div>
-      <span className="text-[10px] font-mono text-white/40 mt-2">
-        TIP: PRESS SPACEBAR OR ⚡ FOR INSTANT HARD DROP
+      <span className="text-[10px] font-mono text-cyan-400/70 mt-2">
+        TIP: SPACEBAR OR ⚡ FOR INSTANT HARD DROP
       </span>
+
+      {/* 100 Levels Picker Modal */}
+      {showLevelPicker && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-md animate-fade-in p-3 sm:p-6">
+          <div className="min-h-full flex items-center justify-center py-4">
+            <div className="bg-[#0b0b0b] border border-cyan-500/40 rounded-[2px] p-5 sm:p-6 max-w-md w-full max-h-[85vh] flex flex-col shadow-[0_0_40px_rgba(6,182,212,0.2)] overflow-hidden my-auto">
+              <div className="flex items-center justify-between pb-3 border-b border-white/[0.08] mb-4 shrink-0">
+                <div>
+                  <span className="text-[10px] font-mono text-cyan-400 tracking-widest uppercase block">// ARCHIVAL SELECTION</span>
+                  <h3 className="text-xl font-display font-bold text-white flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-cyan-400" /> SELECT TETRIS LEVEL
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowLevelPicker(false)}
+                  className="px-2.5 py-1 text-xs font-mono text-white/50 hover:text-white border border-white/10 rounded-[2px]"
+                >
+                  ESC
+                </button>
+              </div>
+
+              <p className="text-xs font-mono text-white/60 mb-3 shrink-0">
+                100 tiered levels with accelerating gravity. Clear 2 lines to advance sequentially!
+              </p>
+
+              <div className="grid grid-cols-10 gap-1.5 overflow-y-auto pr-1 py-1 max-h-[50vh] font-mono text-xs flex-1 min-h-0">
+                {Array.from({ length: 100 }, (_, i) => i + 1).map(lvl => (
+                  <button
+                    key={lvl}
+                    onClick={() => selectSpecificLevel(lvl)}
+                    className={`h-9 rounded-[2px] flex items-center justify-center text-xs font-bold border transition-all ${
+                      level === lvl
+                        ? 'bg-cyan-400 text-black border-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.7)]'
+                        : 'bg-[#141414] text-white/70 hover:text-white border-white/[0.08] hover:border-cyan-400/50'
+                    }`}
+                  >
+                    {lvl}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-white/[0.08] flex justify-between items-center text-xs font-mono text-white/40 shrink-0">
+                <span>CURRENT: LEVEL {level}</span>
+                <button
+                  onClick={() => setShowLevelPicker(false)}
+                  className="px-4 py-1.5 bg-white text-black font-bold uppercase rounded-[2px]"
+                >
+                  CLOSE
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

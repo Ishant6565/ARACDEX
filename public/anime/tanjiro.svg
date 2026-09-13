@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="tanjiroAura" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#dc2626" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#050505" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="tanjiroHair" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#b91c1c"/>
+      <stop offset="60%" stop-color="#450a0a"/>
+      <stop offset="100%" stop-color="#1c1917"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="#070908"/>
+  <circle cx="300" cy="270" r="240" fill="url(#tanjiroAura)"/>
+  <circle cx="300" cy="270" r="215" fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="10 6" opacity="0.35"/>
+  
+  <!-- Green & Black Checkered Haori -->
+  <path d="M140 540 L230 380 L300 420 L370 380 L460 540 L520 600 L80 600 Z" fill="#15803d" stroke="#166534" stroke-width="2"/>
+  <!-- Checkered Blocks on Haori -->
+  <rect x="240" y="440" width="30" height="30" fill="#0f172a"/>
+  <rect x="300" y="440" width="30" height="30" fill="#0f172a"/>
+  <rect x="270" y="470" width="30" height="30" fill="#0f172a"/>
+  <rect x="330" y="470" width="30" height="30" fill="#0f172a"/>
+  <rect x="240" y="500" width="30" height="30" fill="#0f172a"/>
+  <rect x="300" y="500" width="30" height="30" fill="#0f172a"/>
+
+  <!-- Neck -->
+  <path d="M260 340 L340 340 L345 400 L255 400 Z" fill="#fed7aa"/>
+  
+  <!-- Face / Jaw -->
+  <polygon points="220,230 235,330 300,380 365,330 380,230 365,180 235,180" fill="#ffedd5"/>
+  <!-- Flame Demon Slayer Mark on Forehead -->
+  <path d="M245 180 Q255 195 240 210 Q250 205 260 215 Q255 195 245 180 Z" fill="#b91c1c"/>
+
+  <!-- Hanafuda Earrings -->
+  <rect x="205" y="270" width="14" height="28" rx="1" fill="#f8fafc" stroke="#dc2626" stroke-width="1.5"/>
+  <circle cx="212" cy="280" r="3" fill="#dc2626"/>
+  <line x1="212" y1="283" x2="212" y2="295" stroke="#0f172a"/>
+  <rect x="380" y="270" width="14" height="28" rx="1" fill="#f8fafc" stroke="#dc2626" stroke-width="1.5"/>
+  <circle cx="387" cy="280" r="3" fill="#dc2626"/>
+  <line x1="387" y1="283" x2="387" y2="295" stroke="#0f172a"/>
+
+  <!-- Kind Burgundy Eyes -->
+  <polygon points="245,245 278,240 280,255 248,258" fill="#ffffff"/>
+  <circle cx="264" cy="249" r="7" fill="#b91c1c" stroke="#450a0a" stroke-width="1.5"/>
+  <polygon points="355,245 322,240 320,255 352,258" fill="#ffffff"/>
+  <circle cx="336" cy="249" r="7" fill="#b91c1c" stroke="#450a0a" stroke-width="1.5"/>
+
+  <!-- Ruffled Burgundy Hair Swept Back -->
+  <path d="M300 45 L260 110 L220 60 L225 140 L170 95 L195 180 L160 160 L180 230 L225 190 Z" fill="url(#tanjiroHair)"/>
+  <path d="M300 45 L340 110 L380 60 L375 140 L430 95 L405 180 L440 160 L420 230 L375 190 Z" fill="url(#tanjiroHair)"/>
+
+  <!-- Title Badge -->
+  <rect x="30" y="30" width="160" height="34" rx="2" fill="#000000" fill-opacity="0.8" stroke="#10b981" stroke-width="1.5"/>
+  <text x="42" y="52" fill="#d1fae5" font-family="'Inter', sans-serif" font-size="12" font-weight="bold" letter-spacing="2">TANJIRO KAMADO</text>
+  <text x="42" y="570" fill="#6ee7b7" font-family="'JetBrains Mono', monospace" font-size="11" letter-spacing="3">SUN BREATHING // ヒノカミ神楽</text>
+</svg>

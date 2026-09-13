@@ -3,16 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#050505" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="ARCADEX" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
     <title>ARCADEX // Midnight Editorial Cognitive Suite</title>
     <meta name="description" content="A bespoke, lag-free cognitive arcade and minimalist logic suite crafted by Ishant. Pure digital luxury and cognitive clarity." />
-    <!-- Clash Display from Fontshare -->
-    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap" rel="stylesheet">
-    <!-- Google Fonts: Inter, Syne & JetBrains Mono -->
+    <!-- Custom Supercell Clash Font Preload -->
+    <link rel="preload" href="/fonts/Clash-Regular.woff" as="font" type="font/woff" crossorigin>
+    <!-- Preload Hero Monolith Image for Instant LCP -->
+    <link rel="preload" href="/hero_monolith.webp" as="image" type="image/webp" fetchpriority="high">
+    <!-- Google Fonts: Inter, Syne & JetBrains Mono (Non-Render-Blocking) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@700;800;900&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@700;800;900&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@700;800;900&display=swap" media="print" onload="this.media='all'">
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@700;800;900&display=swap">
+    </noscript>
   </head>
   <body class="bg-[#050505] text-white selection:bg-white selection:text-black antialiased overflow-x-hidden">
     <div id="root"></div>

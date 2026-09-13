@@ -8,7 +8,7 @@ export const EditorialManifesto: React.FC = () => {
         {/* Left Column: Heading */}
         <div className="lg:col-span-5 flex flex-col justify-between">
           <div>
-            <span className="text-[10px] font-mono tracking-[0.25em] text-white/40 uppercase block mb-3">
+            <span className="text-[10px] font-mono tracking-[0.25em] text-zinc-400 uppercase block mb-3">
               // PHILOSOPHY & BLUEPRINT
             </span>
             <h2 className="text-3xl sm:text-5xl font-display font-bold text-white tracking-tighter leading-tight">
@@ -16,9 +16,9 @@ export const EditorialManifesto: React.FC = () => {
             </h2>
           </div>
 
-          <div className="mt-8 p-4 bg-[#080808] border border-white/[0.08] rounded-[2px] font-mono text-xs text-white/50 space-y-2">
+          <div className="mt-8 p-4 bg-[#080808] border border-white/[0.08] rounded-[2px] font-mono text-xs text-zinc-300 space-y-2">
             <div className="flex items-center gap-2 text-white">
-              <Cpu className="w-4 h-4 text-amber-400" />
+              <Cpu className="w-4 h-4 text-cyan-400" />
               <span>CORE RUNTIME SPECIFICATION</span>
             </div>
             <p>Framework: React 19 + TypeScript + Tailwind</p>
@@ -38,10 +38,10 @@ export const EditorialManifesto: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 font-mono text-xs">
             <div className="p-4 bg-[#0a0a0a] border border-white/[0.06] rounded-[2px]">
               <div className="text-white font-bold mb-1 flex items-center gap-2">
-                <Zap className="w-3.5 h-3.5 text-amber-400" />
+                <Zap className="w-3.5 h-3.5 text-cyan-400" />
                 TACTILE HARDWARE FEEL
               </div>
-              <p className="text-white/50 text-[11px] leading-normal">
+              <p className="text-zinc-300 text-[11px] leading-normal">
                 Every swipe, keypress, and number entry triggers a micro-synthesizer tone generated directly by your browser's audio processor.
               </p>
             </div>
@@ -51,13 +51,13 @@ export const EditorialManifesto: React.FC = () => {
                 <Shield className="w-3.5 h-3.5 text-blue-400" />
                 SOVEREIGN DATA
               </div>
-              <p className="text-white/50 text-[11px] leading-normal">
+              <p className="text-zinc-300 text-[11px] leading-normal">
                 Your brain streaks and cognitive scores are stored directly in your browser's local sandbox. No telemetry, no accounts required.
               </p>
             </div>
           </div>
 
-          <div className="pt-4 flex items-center justify-between border-t border-white/[0.08] font-mono text-[10px] text-white/40 uppercase">
+          <div className="pt-4 flex items-center justify-between border-t border-white/[0.08] font-mono text-[10px] text-zinc-400 uppercase">
             <span>STUDIO ARCADEX // ISHANT VERIFIED</span>
             <span>BUILD 2026.09.1</span>
           </div>

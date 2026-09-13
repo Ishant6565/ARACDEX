@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="killuaAura" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.6"/>
+      <stop offset="60%" stop-color="#818cf8" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#050505" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="killuaHair" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#e2e8f0"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="#06080d"/>
+  <circle cx="300" cy="270" r="240" fill="url(#killuaAura)"/>
+  <circle cx="300" cy="270" r="215" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="8 6" opacity="0.4"/>
+  
+  <!-- High Collar Navy Long Sleeve + White T-Shirt -->
+  <path d="M140 540 L230 380 L300 420 L370 380 L460 540 L520 600 L80 600 Z" fill="#1e1b4b" stroke="#38bdf8" stroke-width="2"/>
+  <path d="M230 400 L300 450 L370 400 L350 600 L250 600 Z" fill="#f8fafc"/>
+
+  <!-- Neck -->
+  <path d="M260 340 L340 340 L345 400 L255 400 Z" fill="#fed7aa"/>
+  
+  <!-- Cute Assassin Cat Face / Jaw -->
+  <polygon points="220,230 235,330 300,380 365,330 380,230 365,180 235,180" fill="#ffedd5"/>
+  <path d="M275 335 Q300 350 325 335" stroke="#334155" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Big Piercing Deep Blue Assassin Eyes -->
+  <polygon points="245,245 278,240 280,258 248,260" fill="#ffffff"/>
+  <circle cx="264" cy="250" r="8" fill="#0284c7" stroke="#0369a1" stroke-width="1.5"/>
+  <circle cx="267" cy="247" r="3" fill="#ffffff"/>
+  <polygon points="355,245 322,240 320,258 352,260" fill="#ffffff"/>
+  <circle cx="336" cy="250" r="8" fill="#0284c7" stroke="#0369a1" stroke-width="1.5"/>
+  <circle cx="339" cy="247" r="3" fill="#ffffff"/>
+
+  <!-- Wild Fluffy Spiky Silver Hair -->
+  <path d="M300 35 L260 100 L220 45 L225 130 L165 80 L185 170 L140 150 L170 230 L220 190 Z" fill="url(#killuaHair)"/>
+  <path d="M300 35 L340 100 L380 45 L375 130 L435 80 L415 170 L460 150 L430 230 L380 190 Z" fill="url(#killuaHair)"/>
+  <!-- Front Bangs -->
+  <path d="M240 150 L260 230 L280 160 Z" fill="#ffffff"/>
+  <path d="M360 150 L340 230 L320 160 Z" fill="#ffffff"/>
+  <path d="M290 150 L300 210 L310 150 Z" fill="#ffffff"/>
+
+  <!-- Godspeed Lightning Sparks -->
+  <path d="M120 250 L140 230 L130 270 L160 250" stroke="#38bdf8" stroke-width="3" fill="none"/>
+  <path d="M480 250 L460 230 L470 270 L440 250" stroke="#38bdf8" stroke-width="3" fill="none"/>
+
+  <!-- Title Badge -->
+  <rect x="30" y="30" width="160" height="34" rx="2" fill="#000000" fill-opacity="0.8" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="42" y="52" fill="#e0f2fe" font-family="'Inter', sans-serif" font-size="12" font-weight="bold" letter-spacing="2">KILLUA ZOLDYCK</text>
+  <text x="42" y="570" fill="#7dd3fc" font-family="'JetBrains Mono', monospace" font-size="11" letter-spacing="3">GODSPEED // 電光石火</text>
+</svg>

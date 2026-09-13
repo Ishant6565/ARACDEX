@@ -1,39 +1,56 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { sound } from '../services/audio';
-import { recordGameWin } from '../services/storage';
-import { RotateCcw, Award, CheckCircle, ArrowUp } from 'lucide-react';
+import { recordGameWin, getGameLevel, setGameLevel } from '../services/storage';
+import { RotateCcw, Award, CheckCircle, Layers, Trophy } from 'lucide-react';
 
 const SIZE = 4; // 4x4 grid
 
-// Check if a 15-puzzle permutation is solvable
-function isSolvable(arr: number[]): boolean {
-  let inversions = 0;
-  for (let i = 0; i < arr.length; i++) {
-    for (let j = i + 1; j < arr.length; j++) {
-      if (arr[i] !== 0 && arr[j] !== 0 && arr[i] > arr[j]) {
-        inversions++;
-      }
-    }
-  }
-  const zeroIndex = arr.indexOf(0);
-  const zeroRowFromBottom = SIZE - Math.floor(zeroIndex / SIZE);
-  if (zeroRowFromBottom % 2 === 0) {
-    return inversions % 2 !== 0;
-  } else {
-    return inversions % 2 === 0;
-  }
-}
+// Generate a deterministic solvable board by executing N valid random slides from solved state
+function generateLevelBoard(level: number): number[] {
+  const board = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0];
+  let zeroIdx = 15;
 
-function generateSolvableBoard(): number[] {
-  let board: number[];
-  do {
-    board = Array.from({ length: 16 }, (_, i) => i);
-    // Shuffle
-    for (let i = board.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [board[i], board[j]] = [board[j], board[i]];
-    }
-  } while (!isSolvable(board) || isSolved(board));
+  let seed = level * 2654435761;
+  const lcg = () => {
+    seed = (seed * 1664525 + 1013904223) % 4294967296;
+    return seed / 4294967296;
+  };
+
+  // Scramble steps scale from 4 steps (Level 1) to 180 steps (Level 100)
+  const steps = Math.min(180, 4 + (level - 1) * 2);
+  let lastMove = -1;
+
+  for (let s = 0; s < steps; s++) {
+    const r = Math.floor(zeroIdx / SIZE);
+    const c = zeroIdx % SIZE;
+    const neighbors: number[] = [];
+
+    if (r > 0) neighbors.push(zeroIdx - SIZE); // Up
+    if (r < SIZE - 1) neighbors.push(zeroIdx + SIZE); // Down
+    if (c > 0) neighbors.push(zeroIdx - 1); // Left
+    if (c < SIZE - 1) neighbors.push(zeroIdx + 1); // Right
+
+    // Don't immediately undo previous move unless necessary
+    const validCandidates = neighbors.filter(idx => idx !== lastMove);
+    const chosen = validCandidates.length > 0 
+      ? validCandidates[Math.floor(lcg() * validCandidates.length)]
+      : neighbors[Math.floor(lcg() * neighbors.length)];
+
+    board[zeroIdx] = board[chosen];
+    board[chosen] = 0;
+    lastMove = zeroIdx;
+    zeroIdx = chosen;
+  }
+
+  // Ensure not accidentally already solved
+  if (isSolved(board)) {
+    // Make 2 quick swaps
+    const neighbors = [zeroIdx - 1, zeroIdx - SIZE].filter(i => i >= 0);
+    const swapTarget = neighbors[0];
+    board[zeroIdx] = board[swapTarget];
+    board[swapTarget] = 0;
+  }
+
   return board;
 }
 
@@ -45,18 +62,22 @@ function isSolved(board: number[]): boolean {
 }
 
 export const Slide15Game: React.FC<{ onComplete?: (score: number) => void }> = ({ onComplete }) => {
-  const [board, setBoard] = useState<number[]>([]);
+  const [level, setLevel] = useState<number>(() => getGameLevel('slide15'));
+  const [showLevelPicker, setShowLevelPicker] = useState<boolean>(false);
+
+  const initialBoard = useMemo(() => generateLevelBoard(level), [level]);
+  const [board, setBoard] = useState<number[]>(() => [...initialBoard]);
   const [moves, setMoves] = useState<number>(0);
   const [timer, setTimer] = useState<number>(0);
   const [isWon, setIsWon] = useState<boolean>(false);
 
   const initGame = useCallback(() => {
     sound.playClick();
-    setBoard(generateSolvableBoard());
+    setBoard([...initialBoard]);
     setMoves(0);
     setTimer(0);
     setIsWon(false);
-  }, []);
+  }, [initialBoard]);
 
   useEffect(() => {
     initGame();
@@ -84,15 +105,30 @@ export const Slide15Game: React.FC<{ onComplete?: (score: number) => void }> = (
     const newBoard = [...board];
     [newBoard[index], newBoard[zeroIndex]] = [newBoard[zeroIndex], newBoard[index]];
     setBoard(newBoard);
-    setMoves(m => m + 1);
+    const newMoves = moves + 1;
+    setMoves(newMoves);
 
     if (isSolved(newBoard)) {
       sound.playSuccess();
       setIsWon(true);
-      const score = Math.max(10, 1500 - moves * 10 - timer * 5);
-      recordGameWin('slide15', score);
+      const score = Math.max(20, 2000 - newMoves * 15 - timer * 5 + level * 30);
+      recordGameWin('slide15', score, 'SLIDE 15 MATRIX', level);
       onComplete?.(score);
     }
+  };
+
+  const advanceNextLevel = () => {
+    sound.playClick();
+    const nextLvl = Math.min(100, level + 1);
+    setLevel(nextLvl);
+    setGameLevel('slide15', nextLvl);
+  };
+
+  const selectLevel = (targetLvl: number) => {
+    sound.playClick();
+    setLevel(targetLvl);
+    setGameLevel('slide15', targetLvl);
+    setShowLevelPicker(false);
   };
 
   return (
@@ -100,20 +136,30 @@ export const Slide15Game: React.FC<{ onComplete?: (score: number) => void }> = (
       {/* Header */}
       <div className="flex items-center justify-between w-full mb-3 pb-3 border-b border-white/[0.08]">
         <div>
-          <span className="text-[10px] tracking-[0.25em] text-white/40 uppercase font-mono block">PROTOCOL 07</span>
+          <span className="text-[10px] tracking-[0.25em] text-cyan-400 uppercase font-mono block">PROTOCOL 11</span>
           <h2 className="text-2xl font-bold font-display tracking-tight text-white flex items-center gap-2">
-            15-PUZZLE <span className="text-xs font-mono font-normal px-2 py-0.5 rounded-[2px] bg-white/[0.06] text-white/60">CLASSIC</span>
+            SLIDE 15 <span className="text-xs font-mono font-normal px-2 py-0.5 rounded-[2px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">100 LVLS</span>
           </h2>
         </div>
 
         <div className="flex items-center gap-2 font-mono">
+          <button
+            onClick={() => setShowLevelPicker(true)}
+            className="px-2.5 py-1 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-[2px] text-right cursor-pointer transition-all"
+            title="Select from 100 levels"
+          >
+            <span className="text-[9px] text-cyan-400 uppercase block font-bold flex items-center gap-1">
+              <Layers className="w-2.5 h-2.5" /> LEVEL
+            </span>
+            <span className="text-sm font-bold text-cyan-400">{level}/100</span>
+          </button>
           <div className="px-2.5 py-1 bg-[#0a0a0a] border border-white/[0.08] rounded-[2px] text-right">
             <span className="text-[9px] text-white/40 uppercase block">MOVES</span>
             <span className="text-sm font-bold text-white">{moves}</span>
           </div>
           <div className="px-2.5 py-1 bg-[#0a0a0a] border border-white/[0.08] rounded-[2px] text-right">
             <span className="text-[9px] text-white/40 uppercase block">TIME</span>
-            <span className="text-sm font-bold text-amber-400">{timer}s</span>
+            <span className="text-sm font-bold text-cyan-400">{timer}s</span>
           </div>
           <button
             onClick={initGame}
@@ -124,27 +170,112 @@ export const Slide15Game: React.FC<{ onComplete?: (score: number) => void }> = (
         </div>
       </div>
 
-      {/* 4x4 Tiles Grid */}
-      <div className="relative p-2.5 bg-[#080808] border border-white/20 rounded-[2px] grid grid-cols-4 gap-2 w-64 aspect-square shadow-2xl">
-        {board.map((val, idx) => (
-          <button
-            key={idx}
-            onClick={() => handleTileClick(idx)}
-            disabled={val === 0 || isWon}
-            className={`flex items-center justify-center font-mono text-base font-bold rounded-[2px] transition-all duration-150 ${
-              val === 0
-                ? 'bg-[#0d0d0d] border border-transparent cursor-default'
-                : 'bg-white text-black border border-white hover:bg-neutral-200 active:scale-95 shadow-sm'
-            }`}
-          >
-            {val !== 0 ? val : ''}
-          </button>
-        ))}
+      {/* Level Info Header */}
+      <div className="flex items-center justify-between w-full mb-3 text-xs font-mono text-white/50">
+        <span>PUZZLE ENTROPY: <span className="text-cyan-400 font-bold">{Math.min(180, 4 + (level - 1) * 2)} DISPLACEMENTS</span></span>
+        <span>OBJECTIVE: <span className="text-white">1 TO 15 ORDER</span></span>
       </div>
 
+      {/* Grid Matrix */}
+      <div className="grid grid-cols-4 gap-1.5 p-2 bg-[#070707] border border-cyan-500/30 rounded-[2px] w-full aspect-square max-w-[340px] shadow-[0_0_30px_rgba(6,182,212,0.12)]">
+        {board.map((val, idx) => {
+          const isCorrect = val === idx + 1;
+          const isEmpty = val === 0;
+
+          return (
+            <button
+              key={idx}
+              onClick={() => handleTileClick(idx)}
+              disabled={isEmpty || isWon}
+              className={`flex items-center justify-center font-display font-bold text-xl rounded-[2px] transition-all ${
+                isEmpty
+                  ? 'bg-transparent border border-dashed border-white/[0.05] pointer-events-none'
+                  : isCorrect
+                  ? 'bg-cyan-500/20 border border-cyan-400/60 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
+                  : 'bg-[#121212] border border-white/10 text-white hover:bg-[#1a1a1a] hover:border-cyan-400/40 active:scale-95'
+              }`}
+            >
+              {!isEmpty && val}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Win Banner */}
       {isWon && (
-        <div className="mt-4 p-3 bg-emerald-950/40 border border-emerald-500/40 rounded-[2px] w-full text-center flex items-center justify-center gap-2 font-mono text-xs text-emerald-300">
-          <CheckCircle className="w-4 h-4 text-amber-400" /> CONVERGENCE ACHIEVED IN {moves} MOVES!
+        <div className="mt-4 p-4 bg-cyan-500/10 border border-cyan-400/50 rounded-[2px] w-full max-w-[340px] text-center font-mono text-xs text-white">
+          <div className="flex items-center justify-center gap-2 mb-2 font-bold text-cyan-400">
+            <CheckCircle className="w-4 h-4 text-cyan-400" /> CONVERGENCE ACHIEVED IN {moves} MOVES!
+          </div>
+          <p className="text-white/60 mb-3">CONGRATULATIONS! LEVEL {level} MASTERED.</p>
+          <div className="flex gap-2">
+            <button
+              onClick={initGame}
+              className="flex-1 py-2 border border-white/20 text-white font-mono text-xs uppercase hover:bg-white/10 rounded-[2px]"
+            >
+              REPLAY
+            </button>
+            <button
+              onClick={advanceNextLevel}
+              className="flex-1 py-2 bg-cyan-400 text-black font-mono font-bold text-xs uppercase hover:bg-cyan-300 rounded-[2px] shadow-[0_0_15px_rgba(6,182,212,0.5)]"
+            >
+              NEXT LEVEL ({level < 100 ? level + 1 : 100})
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 100 Levels Picker Modal */}
+      {showLevelPicker && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-md animate-fade-in p-3 sm:p-6">
+          <div className="min-h-full flex items-center justify-center py-4">
+            <div className="bg-[#0b0b0b] border border-cyan-500/40 rounded-[2px] p-5 sm:p-6 max-w-md w-full max-h-[85vh] flex flex-col shadow-[0_0_40px_rgba(6,182,212,0.2)] overflow-hidden my-auto">
+              <div className="flex items-center justify-between pb-3 border-b border-white/[0.08] mb-4 shrink-0">
+                <div>
+                  <span className="text-[10px] font-mono text-cyan-400 tracking-widest uppercase block">// ARCHIVAL CIPHER VAULT</span>
+                  <h3 className="text-xl font-display font-bold text-white flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-cyan-400" /> SELECT SLIDE 15 LEVEL
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowLevelPicker(false)}
+                  className="px-2.5 py-1 text-xs font-mono text-white/50 hover:text-white border border-white/10 rounded-[2px]"
+                >
+                  ESC
+                </button>
+              </div>
+
+              <p className="text-xs font-mono text-white/60 mb-3 shrink-0">
+                100 tiered levels with mathematically guaranteed solvability. Higher levels require deeper planning.
+              </p>
+
+              <div className="grid grid-cols-10 gap-1.5 overflow-y-auto pr-1 py-1 max-h-[50vh] font-mono text-xs flex-1 min-h-0">
+                {Array.from({ length: 100 }, (_, i) => i + 1).map(lvl => (
+                  <button
+                    key={lvl}
+                    onClick={() => selectLevel(lvl)}
+                    className={`h-9 rounded-[2px] flex items-center justify-center text-xs font-bold border transition-all ${
+                      level === lvl
+                        ? 'bg-cyan-400 text-black border-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.7)]'
+                        : 'bg-[#141414] text-white/70 hover:text-white border-white/[0.08] hover:border-cyan-400/50'
+                    }`}
+                  >
+                    {lvl}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-white/[0.08] flex justify-between items-center text-xs font-mono text-white/40 shrink-0">
+                <span>ACTIVE: LEVEL {level}</span>
+                <button
+                  onClick={() => setShowLevelPicker(false)}
+                  className="px-4 py-1.5 bg-white text-black font-bold uppercase rounded-[2px]"
+                >
+                  CLOSE
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

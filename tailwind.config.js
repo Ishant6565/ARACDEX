@@ -20,7 +20,8 @@ export default {
         accentBlue: "#3b82f6",
       },
       fontFamily: {
-        display: ['"Clash Display"', '"Syne"', 'sans-serif'],
+        clash: ['"SupercellClash"', '"Clash"', 'sans-serif'],
+        display: ['"SupercellClash"', '"Clash"', 'sans-serif'],
         sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
       },

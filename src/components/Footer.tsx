@@ -10,8 +10,11 @@ export const Footer: React.FC = () => {
 
   return (
     <footer className="bg-[#0a0a0a] border-t border-white/[0.08] pt-16 pb-12 overflow-hidden relative">
-      {/* Ghost Typography Watermark */}
-      <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-[18vw] font-display font-black text-white/[0.02] select-none pointer-events-none tracking-tighter leading-none whitespace-nowrap">
+      {/* Ghost Typography Watermark (Decorative - aria-hidden for a11y) */}
+      <div 
+        aria-hidden="true" 
+        className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-[18vw] font-display font-black text-white/[0.03] select-none pointer-events-none tracking-tighter leading-none whitespace-nowrap"
+      >
         ARCADEX
       </div>
 
@@ -24,25 +27,25 @@ export const Footer: React.FC = () => {
                 A
               </div>
               <span className="font-display font-bold text-white tracking-tight">ARCADEX</span>
-              <span className="text-[9px] font-mono text-white/40 px-1.5 py-0.5 bg-white/[0.06] rounded-[1px]">
+              <span className="text-[9px] font-mono text-zinc-300 px-1.5 py-0.5 bg-white/[0.1] rounded-[1px]">
                 V1.0
               </span>
             </div>
-            <p className="text-xs font-sans text-white/50 max-w-sm leading-relaxed mb-4">
+            <p className="text-xs font-sans text-zinc-300 max-w-sm leading-relaxed mb-4">
               A bespoke, zero-latency cognitive suite developed with the Midnight Editorial design system. 
               Pure digital luxury and cognitive clarity.
             </p>
-            <div className="font-mono text-[10px] text-amber-400 tracking-wider">
-              ARCHITECTED & CRAFTED BY ISHANT
+            <div className="font-mono text-[10px] text-cyan-400 tracking-wider">
+              DEVELOPED & CREATED BY ISHANT GUPTA
             </div>
           </div>
 
           {/* Architecture Details */}
           <div>
-            <span className="font-mono text-[10px] text-white/40 uppercase tracking-[0.2em] block mb-3">
+            <span className="font-mono text-[10px] text-zinc-400 uppercase tracking-[0.2em] block mb-3">
               STACK TECH
             </span>
-            <ul className="space-y-1.5 font-mono text-xs text-white/60">
+            <ul className="space-y-1.5 font-mono text-xs text-zinc-300">
               <li>• React 19 Engine</li>
               <li>• Native Web Audio API</li>
               <li>• Vite Fast-Bundler</li>
@@ -53,7 +56,7 @@ export const Footer: React.FC = () => {
           {/* Quick Actions */}
           <div className="flex flex-col justify-between items-start md:items-end">
             <div>
-              <span className="font-mono text-[10px] text-white/40 uppercase tracking-[0.2em] block mb-3">
+              <span className="font-mono text-[10px] text-zinc-400 uppercase tracking-[0.2em] block mb-3">
                 INTEGRITY
               </span>
               <div className="font-mono text-xs text-emerald-400 flex items-center gap-1.5">
@@ -64,7 +67,7 @@ export const Footer: React.FC = () => {
 
             <button
               onClick={scrollToTop}
-              className="mt-6 flex items-center gap-2 px-4 py-2 bg-[#121212] hover:bg-white hover:text-black border border-white/[0.08] font-mono text-xs text-white transition-all rounded-[2px]"
+              className="mt-6 flex items-center gap-2 px-4 py-2 bg-[#121212] hover:bg-white hover:text-black border border-white/[0.15] font-mono text-xs text-white transition-all rounded-[2px]"
             >
               BACK TO TOP <ArrowUp className="w-3.5 h-3.5" />
             </button>
@@ -72,9 +75,9 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Bottom Credits */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-[10px] text-white/40 tracking-wider">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-[10px] text-zinc-400 tracking-wider">
           <span>© 2026 ARCADEX COGNITIVE STUDIO. ALL RIGHTS RESERVED.</span>
-          <span>CURATED FOR ISHANT // ZERO CLOUD COSTS</span>
+          <span>DEVELOPED & CREATED BY ISHANT GUPTA</span>
         </div>
       </div>
     </footer>
