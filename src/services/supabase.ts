@@ -12,6 +12,42 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 });
 
 /**
+ * Genuine Google OAuth through Supabase -> accounts.google.com
+ */
+export async function signInWithRealGoogle(): Promise<{ error: any }> {
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+    return { error };
+  } catch (err) {
+    return { error: err };
+  }
+}
+
+/**
+ * Check if user is currently authenticated via genuine Google OAuth
+ */
+export async function getActiveGoogleUser(): Promise<{ email: string; name: string; avatar: string } | null> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const u = session.user;
+      const email = u.email || '';
+      const name = u.user_metadata?.full_name || u.user_metadata?.name || email.split('@')[0];
+      const avatar = u.user_metadata?.avatar_url || u.user_metadata?.picture || '/anime/kakashi.svg';
+      return { email, name, avatar };
+    }
+  } catch (err) {
+    console.warn('[Supabase] getSession error:', err);
+  }
+  return null;
+}
+
+/**
  * Sync user profile to Supabase 'profiles' table
  */
 export async function syncProfileToCloud(user: UserProfile): Promise<void> {
