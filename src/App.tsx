@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { StatsStrip } from './components/StatsStrip';
@@ -11,6 +11,7 @@ import { GameInfo, UserStats, UserProfile } from './types';
 import { loadUserStats, recordGameWin } from './services/storage';
 import { getCurrentUser } from './services/auth';
 import { sound } from './services/audio';
+import { syncLocalWithCloud } from './services/supabase';
 
 export function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile>(getCurrentUser);
@@ -55,9 +56,29 @@ export function App() {
     setIsStatsModalOpen(true);
   };
 
+  // Auto-sync progress with Supabase cloud when logged in
+  useEffect(() => {
+    if (currentUser && currentUser.id !== 'guest_primary') {
+      syncLocalWithCloud(currentUser).then(syncedUser => {
+        if (syncedUser) {
+          setCurrentUser(syncedUser);
+          setStats(syncedUser.stats);
+        }
+      });
+    }
+  }, [currentUser.id]);
+
   const handleUserChange = (user: UserProfile) => {
     setCurrentUser(user);
     setStats(user.stats);
+    if (user && user.id !== 'guest_primary') {
+      syncLocalWithCloud(user).then(syncedUser => {
+        if (syncedUser) {
+          setCurrentUser(syncedUser);
+          setStats(syncedUser.stats);
+        }
+      });
+    }
   };
 
   return (

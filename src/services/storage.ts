@@ -1,6 +1,7 @@
 import { UserStats, TierInfo } from '../types';
 import { getCurrentUser, updateCurrentUserProfile, logActivity } from './auth';
 import { sound } from './audio';
+import { syncGameProgressToCloud, syncStatsToCloud } from './supabase';
 
 export const TIERS_LADDER: TierInfo[] = [
   {
@@ -103,6 +104,11 @@ export function setGameLevel(gameId: string, level: number): void {
   currentLevels[gameId] = Math.max(1, level);
   stats.levels = currentLevels;
   saveUserStats(stats);
+
+  const user = getCurrentUser();
+  if (user && user.id !== 'guest_primary') {
+    syncGameProgressToCloud(user.id, gameId, Math.max(1, level), stats.scores[gameId] || 0);
+  }
 }
 
 export function recordGameWin(gameId: string, score: number, gameTitle?: string, levelWon?: number): UserStats {
@@ -157,11 +163,13 @@ export function recordGameWin(gameId: string, score: number, gameTitle?: string,
   }
 
   // Update level advancement if provided (Unlimited for arrow-escape, 100 for others)
+  let updatedLevel = stats.levels?.[gameId] || 1;
   if (levelWon) {
     const currentLevels = stats.levels || {};
     const existing = currentLevels[gameId] || 1;
     if (levelWon >= existing) {
       currentLevels[gameId] = levelWon + 1;
+      updatedLevel = levelWon + 1;
     }
     stats.levels = currentLevels;
   }
@@ -172,6 +180,12 @@ export function recordGameWin(gameId: string, score: number, gameTitle?: string,
 
   saveUserStats(stats);
   logActivity(gameId, gameTitle || gameId.toUpperCase(), score);
+
+  // Background sync to Supabase cloud
+  if (user && user.id !== 'guest_primary') {
+    syncGameProgressToCloud(user.id, gameId, updatedLevel, Math.max(score, currentBest));
+    syncStatsToCloud(user.id, stats);
+  }
 
   return stats;
 }
