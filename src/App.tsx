@@ -108,45 +108,43 @@ export function App() {
         try {
           await closeAuthBrowser();
           const rawUrl = data.url;
-          if (rawUrl.includes('access_token')) {
-            const hashPart = rawUrl.substring(rawUrl.indexOf('#') + 1);
-            const params = new URLSearchParams(hashPart);
-            const accessToken = params.get('access_token');
-            const refreshToken = params.get('refresh_token');
-            if (accessToken) {
-              const { data: sessionData, error } = await supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: refreshToken || '',
-              });
-              if (!error && sessionData?.user) {
-                const u = sessionData.user;
-                const provider = (u.app_metadata?.provider || 'google') as 'google' | 'github';
-                const email = u.email || `${u.user_metadata?.user_name || 'operator'}@${provider}.com`;
-                const name = u.user_metadata?.full_name || u.user_metadata?.user_name || u.user_metadata?.name || email.split('@')[0];
-                const avatar = u.user_metadata?.avatar_url || (provider === 'github' ? '/anime/jinwoo.svg' : '/anime/kakashi.svg');
-                const user = loginWithOAuthProvider(u.id, email, name, avatar, provider);
-                setCurrentUser(user);
-                setStats(user.stats);
-                setHasRealAccount(true);
-              }
+          const queryPart = rawUrl.includes('?') ? rawUrl.substring(rawUrl.indexOf('?') + 1).split('#')[0] : '';
+          const hashPart = rawUrl.includes('#') ? rawUrl.substring(rawUrl.indexOf('#') + 1) : '';
+          const queryParams = new URLSearchParams(queryPart);
+          const hashParams = new URLSearchParams(hashPart);
+
+          const accessToken = hashParams.get('access_token') || queryParams.get('access_token');
+          const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
+          const code = queryParams.get('code') || hashParams.get('code');
+
+          if (accessToken) {
+            const { data: sessionData, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken || '',
+            });
+            if (!error && sessionData?.user) {
+              const u = sessionData.user;
+              const provider = (u.app_metadata?.provider || 'google') as 'google' | 'github';
+              const email = u.email || `${u.user_metadata?.user_name || 'operator'}@${provider}.com`;
+              const name = u.user_metadata?.full_name || u.user_metadata?.user_name || u.user_metadata?.name || email.split('@')[0];
+              const avatar = u.user_metadata?.avatar_url || (provider === 'github' ? '/anime/jinwoo.svg' : '/anime/kakashi.svg');
+              const user = loginWithOAuthProvider(u.id, email, name, avatar, provider);
+              setCurrentUser(user);
+              setStats(user.stats);
+              setHasRealAccount(true);
             }
-          } else if (rawUrl.includes('code=')) {
-            const queryPart = rawUrl.substring(rawUrl.indexOf('?') + 1);
-            const params = new URLSearchParams(queryPart);
-            const code = params.get('code');
-            if (code) {
-              const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code);
-              if (!error && sessionData?.user) {
-                const u = sessionData.user;
-                const provider = (u.app_metadata?.provider || 'google') as 'google' | 'github';
-                const email = u.email || `${u.user_metadata?.user_name || 'operator'}@${provider}.com`;
-                const name = u.user_metadata?.full_name || u.user_metadata?.user_name || u.user_metadata?.name || email.split('@')[0];
-                const avatar = u.user_metadata?.avatar_url || (provider === 'github' ? '/anime/jinwoo.svg' : '/anime/kakashi.svg');
-                const user = loginWithOAuthProvider(u.id, email, name, avatar, provider);
-                setCurrentUser(user);
-                setStats(user.stats);
-                setHasRealAccount(true);
-              }
+          } else if (code) {
+            const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code);
+            if (!error && sessionData?.user) {
+              const u = sessionData.user;
+              const provider = (u.app_metadata?.provider || 'google') as 'google' | 'github';
+              const email = u.email || `${u.user_metadata?.user_name || 'operator'}@${provider}.com`;
+              const name = u.user_metadata?.full_name || u.user_metadata?.user_name || u.user_metadata?.name || email.split('@')[0];
+              const avatar = u.user_metadata?.avatar_url || (provider === 'github' ? '/anime/jinwoo.svg' : '/anime/kakashi.svg');
+              const user = loginWithOAuthProvider(u.id, email, name, avatar, provider);
+              setCurrentUser(user);
+              setStats(user.stats);
+              setHasRealAccount(true);
             }
           }
         } catch (err) {

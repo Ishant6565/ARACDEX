@@ -24,34 +24,77 @@ export async function closeAuthBrowser(): Promise<void> {
 }
 
 /**
- * Google Sign In through Supabase (Works in Web and APK via custom user-agent)
+ * Google Sign In through Supabase (Works in Web and APK via deep link)
  */
 export async function signInWithRealGoogle(): Promise<{ error: any }> {
   try {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
-    return { error };
+    const isNative = isNativeAPK();
+    const redirectTo = isNative ? 'com.arcadex.game://auth/callback' : window.location.origin;
+
+    if (isNative) {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+          queryParams: {
+            prompt: 'select_account',
+            access_type: 'offline',
+          },
+        },
+      });
+      if (error) return { error };
+      if (data?.url) {
+        await Browser.open({ url: data.url, windowName: '_self' });
+      }
+      return { error: null };
+    } else {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          queryParams: {
+            prompt: 'select_account',
+          },
+        },
+      });
+      return { error };
+    }
   } catch (err) {
     return { error: err };
   }
 }
 
 /**
- * GitHub Sign In through Supabase
+ * GitHub Sign In through Supabase (Works in Web and APK via deep link)
  */
 export async function signInWithGitHub(): Promise<{ error: any }> {
   try {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'github',
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
-    return { error };
+    const isNative = isNativeAPK();
+    const redirectTo = isNative ? 'com.arcadex.game://auth/callback' : window.location.origin;
+
+    if (isNative) {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error) return { error };
+      if (data?.url) {
+        await Browser.open({ url: data.url, windowName: '_self' });
+      }
+      return { error: null };
+    } else {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo,
+        },
+      });
+      return { error };
+    }
   } catch (err) {
     return { error: err };
   }
