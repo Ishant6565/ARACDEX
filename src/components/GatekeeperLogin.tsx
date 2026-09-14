@@ -378,33 +378,146 @@ export const GatekeeperLogin: React.FC<GatekeeperLoginProps> = ({ onLoginSuccess
                 </div>
               )}
 
-              {/* MODE 1: OFFICIAL GOOGLE OAUTH */}
+              {/* MODE 1: GOOGLE / GMAIL ACCOUNT */}
               {authMode === 'google' && (
-                <div className="space-y-3 text-left bg-[#09090c] border border-cyan-500/30 p-4 rounded-[4px] shadow-[0_0_30px_rgba(0,0,0,0.7)]">
-                  <div className="text-center py-2 space-y-2">
-                    <p className="text-xs font-mono text-zinc-300">
-                      Official Google Authorization (OAuth 2.0)
-                    </p>
-                    <p className="text-[11px] font-sans text-zinc-500">
-                      Tap below to open Google's real account picker and authorization screen.
-                    </p>
+                <form
+                  onSubmit={handlePasswordSubmit}
+                  className="space-y-3 text-left bg-[#09090c] border border-cyan-500/30 p-4 rounded-[4px] shadow-[0_0_30px_rgba(0,0,0,0.7)]"
+                >
+                  <div className="flex bg-black/60 p-1 rounded-[3px] border border-white/[0.08] text-center font-mono text-[10px]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sound.playClick();
+                        setIsRegisteringPassword(false);
+                        setErrorMessage('');
+                      }}
+                      className={`flex-1 py-1.5 rounded-[2px] transition-colors ${
+                        !isRegisteringPassword ? 'bg-cyan-500/20 text-cyan-300 font-bold' : 'text-zinc-500'
+                      }`}
+                    >
+                      GOOGLE SIGN IN
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sound.playClick();
+                        setIsRegisteringPassword(true);
+                        setErrorMessage('');
+                      }}
+                      className={`flex-1 py-1.5 rounded-[2px] transition-colors ${
+                        isRegisteringPassword ? 'bg-cyan-500/20 text-cyan-300 font-bold' : 'text-zinc-500'
+                      }`}
+                    >
+                      REGISTER GOOGLE ID
+                    </button>
                   </div>
 
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider flex items-center justify-between">
+                      <span>GOOGLE / GMAIL ADDRESS</span>
+                      {emailInput.endsWith('@gmail.com') && (
+                        <span className="text-emerald-400 text-[9px] flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> GMAIL VERIFIED
+                        </span>
+                      )}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        required
+                        value={emailInput}
+                        onChange={e => setEmailInput(e.target.value)}
+                        placeholder="yourname@gmail.com"
+                        className="w-full pl-9 pr-3 py-2 bg-black border border-white/[0.15] focus:border-cyan-400 rounded-[2px] font-mono text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors"
+                      />
+                      <Mail className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+                      PASSWORD
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        value={passwordInput}
+                        onChange={e => setPasswordInput(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full pl-9 pr-9 py-2 bg-black border border-white/[0.15] focus:border-cyan-400 rounded-[2px] font-mono text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors"
+                      />
+                      <KeyRound className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {isRegisteringPassword && (
+                    <>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+                          CALLSIGN / USERNAME
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={callsignInput}
+                          onChange={e => setCallsignInput(e.target.value)}
+                          placeholder="e.g. ISHANT GUPTA"
+                          className="w-full px-3 py-2 bg-black border border-white/[0.15] focus:border-cyan-400 rounded-[2px] font-mono text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors uppercase tracking-wider"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+                          CHOOSE TITAN AVATAR
+                        </label>
+                        <div className="grid grid-cols-6 gap-1.5 max-h-20 overflow-y-auto p-1 bg-black/60 border border-white/[0.1] rounded-[2px] scrollbar-thin">
+                          {AVAILABLE_AVATARS.map(av => (
+                            <button
+                              type="button"
+                              key={av.id}
+                              onClick={() => {
+                                sound.playClick();
+                                setSelectedAvatar(av.src);
+                              }}
+                              className={`w-full aspect-square rounded-[2px] border overflow-hidden relative transition-all bg-black ${
+                                selectedAvatar === av.src
+                                  ? 'border-cyan-400 ring-2 ring-cyan-400/60 scale-105'
+                                  : 'border-white/10 hover:border-white/30'
+                              }`}
+                              title={av.name}
+                            >
+                              <img src={av.src} alt={av.name} className="w-full h-full object-cover" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
                   <button
-                    type="button"
-                    onClick={handleGoogleClick}
+                    type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3.5 px-4 bg-white hover:bg-zinc-100 text-zinc-900 font-sans font-bold text-xs uppercase tracking-wider rounded-[3px] transition-all shadow-[0_0_25px_rgba(255,255,255,0.2)] active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60"
+                    className="w-full py-3 bg-cyan-400 hover:bg-cyan-300 text-black font-mono font-bold text-xs uppercase tracking-wider rounded-[2px] transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] active:scale-95 flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-60"
                   >
-                    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                    </svg>
-                    <span>{isSubmitting ? 'OPENING GOOGLE SIGN-IN...' : 'CONTINUE WITH GOOGLE'}</span>
+                    <UserCheck className="w-4 h-4 text-black" />
+                    <span>
+                      {isSubmitting
+                        ? 'AUTHENTICATING...'
+                        : isRegisteringPassword
+                        ? 'REGISTER & PLAY'
+                        : 'SIGN IN TO ARCADEX'}
+                    </span>
                   </button>
-                </div>
+                </form>
               )}
 
               {/* MODE 2: EMAIL & PASSWORD AUTHENTICATION */}

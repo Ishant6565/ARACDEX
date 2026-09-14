@@ -25,23 +25,11 @@ export async function closeAuthBrowser(): Promise<void> {
 
 /**
  * Google Sign In through Supabase
- * In native Android APK, opens Google OAuth in Chrome Custom Tabs via @capacitor/browser,
- * which Google fully supports (avoiding WebView 403 disallowed_useragent).
  */
 export async function signInWithRealGoogle(): Promise<{ error: any; isNative?: boolean }> {
   try {
     if (isNativeAPK()) {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: 'arcadex://auth/callback',
-          skipBrowserRedirect: true,
-        },
-      });
-      if (error) throw error;
-      if (data?.url) {
-        await Browser.open({ url: data.url, windowName: '_system' });
-      }
+      // In native APK, do not open external browser as Supabase redirects to an external domain.
       return { error: null, isNative: true };
     }
     const { error } = await supabase.auth.signInWithOAuth({
@@ -62,17 +50,6 @@ export async function signInWithRealGoogle(): Promise<{ error: any; isNative?: b
 export async function signInWithGitHub(): Promise<{ error: any; isNative?: boolean }> {
   try {
     if (isNativeAPK()) {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
-        options: {
-          redirectTo: 'arcadex://auth/callback',
-          skipBrowserRedirect: true,
-        },
-      });
-      if (error) throw error;
-      if (data?.url) {
-        await Browser.open({ url: data.url, windowName: '_system' });
-      }
       return { error: null, isNative: true };
     }
     const { error } = await supabase.auth.signInWithOAuth({
