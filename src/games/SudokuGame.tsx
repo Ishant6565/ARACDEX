@@ -228,7 +228,7 @@ export const SudokuGame: React.FC<{ onComplete?: (score: number) => void }> = ({
   return (
     <div className="flex flex-col items-center w-full max-w-md mx-auto select-none">
       {/* Header */}
-      <div className="flex items-center justify-between w-full mb-3 pb-3 border-b border-white/[0.08]">
+      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 w-full mb-3 pb-3 border-b border-white/[0.08]">
         <div>
           <span className="text-[10px] tracking-[0.25em] text-cyan-400 uppercase font-mono block">PROTOCOL 03</span>
           <h2 className="text-2xl font-bold font-display tracking-tight text-white flex items-center gap-2">

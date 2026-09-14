@@ -12,7 +12,7 @@ export const StatsStrip: React.FC<StatsStripProps> = ({ stats, onOpenStats }) =>
   return (
     <section id="stats" className="border-y border-white/[0.08] bg-[#070707]/90 backdrop-blur-sm py-8 select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <span className="font-mono text-[10px] tracking-[0.25em] text-cyan-400/80 uppercase">
             // LIVE COGNITIVE TELEMETRY (100 LEVEL REPOSITORY)
           </span>

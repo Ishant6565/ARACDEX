@@ -8,7 +8,7 @@ interface HeroProps {
 
 export const Hero: React.FC<HeroProps> = ({ onStartClick }) => {
   return (
-    <section className="relative min-h-[88vh] flex flex-col justify-between pt-28 sm:pt-36 pb-12 px-4 sm:px-6 max-w-7xl mx-auto overflow-hidden select-none">
+    <section className="relative min-h-[88vh] flex flex-col justify-between pt-[calc(7rem+env(safe-area-inset-top,0px))] sm:pt-[calc(9rem+env(safe-area-inset-top,0px))] pb-12 px-4 sm:px-6 max-w-7xl mx-auto overflow-hidden select-none">
       {/* Atmospheric Light Leaks (Electric Cyan & Neon Blue) */}
       <div className="light-leak-cyan" />
       <div className="light-leak-blue" />
@@ -16,7 +16,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartClick }) => {
       {/* Main Centerpiece: ARCADEX with central Play button */}
       <div className="my-auto py-12 relative flex flex-col items-center justify-center text-center z-20">
         {/* ARCADEX Main Heading */}
-        <h1 className="text-7xl sm:text-8xl md:text-9xl lg:text-[11rem] font-clash font-bold tracking-wide text-white leading-none select-none max-w-full px-2 drop-shadow-[0_15px_35px_rgba(0,0,0,0.95)]">
+        <h1 className="text-5xl sm:text-7xl md:text-9xl lg:text-[11rem] font-clash font-bold tracking-wide text-white leading-none select-none max-w-full px-2 drop-shadow-[0_15px_35px_rgba(0,0,0,0.95)]">
           ARCADEX
         </h1>
 
@@ -43,7 +43,8 @@ export const Hero: React.FC<HeroProps> = ({ onStartClick }) => {
 
       {/* Bottom Scroll Anchor */}
       <div className="flex items-center justify-between border-t border-white/[0.12] pt-4 font-mono text-[10px] text-zinc-300 uppercase tracking-widest z-10 bg-black/40 backdrop-blur-sm px-3 py-2 rounded-[2px]">
-        <span>PRESS SPACE OR ARROW KEYS TO NAVIGATE</span>
+        <span className="hidden sm:inline">PRESS SPACE OR ARROW KEYS TO NAVIGATE</span>
+        <span className="sm:hidden">TOUCH TO EXPLORE // 13 PROTOCOLS</span>
         <a href="#catalog" className="flex items-center gap-1.5 hover:text-white transition-colors text-cyan-400">
           SCROLL TO GAMES <ArrowDown className="w-3 h-3 animate-bounce" />
         </a>

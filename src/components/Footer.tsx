@@ -13,7 +13,7 @@ export const Footer: React.FC = () => {
 
   return (
     <>
-      <footer className="bg-[#0a0a0a] border-t border-white/[0.08] pt-14 pb-10 overflow-hidden relative select-none">
+      <footer className="bg-[#0a0a0a] border-t border-white/[0.08] pt-14 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))] overflow-hidden relative select-none">
         {/* Ghost Typography Watermark (Decorative) */}
         <div 
           aria-hidden="true" 

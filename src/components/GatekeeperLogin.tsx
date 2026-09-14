@@ -60,12 +60,12 @@ export const GatekeeperLogin: React.FC<GatekeeperLoginProps> = ({ onLoginSuccess
   };
 
   return (
-    <div className="fixed inset-0 z-[150] bg-[#050508] overflow-y-auto select-none animate-fade-in">
+    <div className="fixed inset-0 z-[150] bg-[#050508] overflow-y-auto select-none animate-fade-in pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]">
       {/* Ambient Lighting */}
       <div className="fixed top-1/4 left-1/3 -translate-x-1/2 w-96 h-96 bg-cyan-500/10 blur-[130px] rounded-full pointer-events-none" />
       <div className="fixed bottom-1/4 right-1/3 w-96 h-96 bg-blue-600/10 blur-[130px] rounded-full pointer-events-none" />
 
-      <div className="min-h-full w-full flex flex-col items-center justify-start sm:justify-center p-4 py-8 sm:py-10">
+      <div className="min-h-full w-full flex flex-col items-center justify-start sm:justify-center p-4 py-6 sm:py-10">
         <div className="relative z-10 w-full max-w-md my-auto flex flex-col items-center text-center">
           {/* Glowing Logo & Title */}
           <div className="relative mb-3">

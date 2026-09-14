@@ -105,7 +105,7 @@ export const GameModal: React.FC<GameModalProps> = ({ game, onClose, onGameCompl
       <div className="absolute bottom-0 right-1/4 w-96 h-48 bg-blue-500/10 blur-[100px] pointer-events-none rounded-full" />
 
       {/* Top Arena Navigation Bar */}
-      <header className="h-14 sm:h-16 px-3 sm:px-6 bg-[#08080a]/95 backdrop-blur-md border-b border-white/[0.08] flex items-center justify-between shrink-0 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.8)]">
+      <header className="h-[calc(3.5rem+env(safe-area-inset-top,0px))] sm:h-[calc(4rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] px-3 sm:px-6 bg-[#08080a]/95 backdrop-blur-md border-b border-white/[0.08] flex items-center justify-between shrink-0 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.8)]">
         <div className="flex items-center gap-3">
           {/* Back to Lobby Button */}
           <button
@@ -113,7 +113,7 @@ export const GameModal: React.FC<GameModalProps> = ({ game, onClose, onGameCompl
               sound.playClick();
               onClose();
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#121215] hover:bg-[#1a1a20] border border-white/[0.1] hover:border-cyan-400/60 rounded-[3px] text-xs font-mono text-zinc-300 hover:text-white transition-all active:scale-95 group"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#121215] hover:bg-[#1a1a20] border border-white/[0.1] hover:border-cyan-400/60 rounded-[3px] text-xs font-mono text-zinc-300 hover:text-white transition-all active:scale-95 group cursor-pointer"
             title="Exit Protocol to Lobby"
           >
             <ChevronLeft className="w-4 h-4 text-cyan-400 group-hover:-translate-x-0.5 transition-transform" />
@@ -145,7 +145,7 @@ export const GameModal: React.FC<GameModalProps> = ({ game, onClose, onGameCompl
                 customNote: `Playing ${game.title} on ARCADEX! Can you beat my highscore?`,
               });
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-400/40 hover:border-emerald-300 rounded-[3px] transition-all active:scale-95 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-400/40 hover:border-emerald-300 rounded-[3px] transition-all active:scale-95 shadow-[0_0_10px_rgba(16,185,129,0.2)] cursor-pointer"
             title="Share Protocol on WhatsApp"
           >
             <Share2 className="w-3.5 h-3.5 text-emerald-400" />
@@ -158,7 +158,7 @@ export const GameModal: React.FC<GameModalProps> = ({ game, onClose, onGameCompl
               sound.playClick();
               onClose();
             }}
-            className="p-2 text-white/60 hover:text-white bg-[#141414] hover:bg-[#202020] border border-white/[0.08] hover:border-cyan-400/50 rounded-[3px] transition-colors"
+            className="p-2 text-white/60 hover:text-white bg-[#141414] hover:bg-[#202020] border border-white/[0.08] hover:border-cyan-400/50 rounded-[3px] transition-colors cursor-pointer"
             title="Close Protocol"
           >
             <X className="w-4 h-4" />
@@ -167,12 +167,12 @@ export const GameModal: React.FC<GameModalProps> = ({ game, onClose, onGameCompl
       </header>
 
       {/* Main Game Stage Arena (fills the screen with smooth scrolling) */}
-      <main className="flex-1 w-full overflow-y-auto flex flex-col items-center justify-center p-3 sm:p-6 relative z-10 scrollbar-thin">
+      <main className="flex-1 w-full overflow-y-auto flex flex-col items-center justify-start sm:justify-center p-3 sm:p-6 relative z-10 scrollbar-thin">
         {renderGame()}
       </main>
 
       {/* Bottom Controls Bar */}
-      <footer className="px-4 py-2 bg-[#08080a] border-t border-white/[0.06] flex items-center justify-between font-mono text-[10px] text-white/40 shrink-0 z-20">
+      <footer className="px-4 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] bg-[#08080a] border-t border-white/[0.06] flex items-center justify-between font-mono text-[10px] text-white/40 shrink-0 z-20">
         <span className="flex items-center gap-1.5 truncate">
           <Terminal className="w-3 h-3 text-cyan-400 shrink-0" />
           CONTROLS: {game.controls}

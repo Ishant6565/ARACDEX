@@ -378,7 +378,7 @@ export const AnimePuzzleGame: React.FC<{ onComplete?: (score: number) => void }>
   return (
     <div className="flex flex-col items-center w-full max-w-lg mx-auto select-none">
       {/* Top Header & Level Bar */}
-      <div className="flex items-center justify-between w-full mb-2 pb-2 border-b border-white/[0.08]">
+      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 w-full mb-2 pb-2 border-b border-white/[0.08]">
         <div>
           <span className="text-[10px] tracking-[0.25em] text-cyan-400 uppercase font-mono block">
             PROTOCOL 04 // 100 LEVELS

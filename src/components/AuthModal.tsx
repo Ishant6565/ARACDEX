@@ -100,7 +100,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const isCurrentLoggedInWithGmail = Boolean(currentUser.email && currentUser.email.includes('@'));
 
   return createPortal(
-    <div className="fixed inset-0 z-[110] overflow-y-auto bg-black/85 backdrop-blur-md animate-fade-in select-none p-3 sm:p-6">
+    <div className="fixed inset-0 z-[110] overflow-y-auto bg-black/85 backdrop-blur-md animate-fade-in select-none p-3 sm:p-6 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
       <div className="min-h-full flex items-center justify-center py-4">
         <div className="relative w-full max-w-lg bg-[#0b0b0e] border border-cyan-500/40 rounded-[3px] shadow-[0_25px_70px_rgba(0,0,0,0.95),0_0_35px_rgba(6,182,212,0.2)] flex flex-col max-h-[90vh] overflow-hidden my-auto">
           {/* Top Header */}

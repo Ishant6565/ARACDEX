@@ -322,7 +322,7 @@ export const Game2048: React.FC<{ onComplete?: (score: number) => void }> = ({ o
   return (
     <div className="flex flex-col items-center select-none w-full max-w-md mx-auto">
       {/* Top Header Bar */}
-      <div className="flex items-center justify-between w-full mb-3 pb-2 border-b border-white/[0.08]">
+      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between w-full mb-3 pb-2 border-b border-white/[0.08] gap-2">
         <div>
           <span className="text-[10px] tracking-[0.25em] text-cyan-400 uppercase font-mono block">
             PROTOCOL 03 // 100 LEVELS

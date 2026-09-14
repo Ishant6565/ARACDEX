@@ -41,7 +41,7 @@ export const StreakCelebrationModal: React.FC = () => {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in select-none">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in select-none pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
       <div 
         className="relative w-full max-w-sm bg-[#0a0a0d] border-2 border-cyan-400/80 rounded-[4px] p-6 text-center shadow-[0_0_60px_rgba(6,182,212,0.35)] overflow-hidden animate-arena-enter"
         onClick={e => e.stopPropagation()}

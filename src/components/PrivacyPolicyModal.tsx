@@ -12,7 +12,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ isOpen, 
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[110] overflow-y-auto bg-black/85 backdrop-blur-md animate-fade-in select-none p-3 sm:p-6">
+    <div className="fixed inset-0 z-[110] overflow-y-auto bg-black/85 backdrop-blur-md animate-fade-in select-none p-3 sm:p-6 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
       <div className="min-h-full flex items-center justify-center py-6 sm:py-8">
         <div className="relative w-full max-w-xl bg-[#09090b] border border-cyan-500/30 rounded-2xl p-5 sm:p-7 shadow-[0_0_60px_rgba(6,182,212,0.25)] flex flex-col max-h-[85vh] sm:max-h-[90vh] overflow-hidden my-auto">
           {/* Ambient Glow */}

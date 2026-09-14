@@ -449,8 +449,8 @@ export const WordleGame: React.FC<{ onComplete?: (score: number) => void }> = ({
               <button
                 key={key}
                 onClick={() => handleKey(key)}
-                className={`py-2 px-2 text-xs font-mono rounded-[2px] border transition-all active:scale-90 ${
-                  key === 'ENTER' || key === 'DEL' ? 'px-3 text-[10px] font-bold bg-[#141414]' : ''
+                className={`py-2.5 px-1 sm:px-2 text-xs font-mono rounded-[2px] border transition-all active:scale-90 flex-1 min-w-0 max-w-[36px] flex items-center justify-center ${
+                  key === 'ENTER' || key === 'DEL' ? 'max-w-[54px] px-1 sm:px-2 text-[9px] sm:text-[10px] font-bold bg-[#141414]' : ''
                 } ${getKeyStatus(key)}`}
               >
                 {key}
