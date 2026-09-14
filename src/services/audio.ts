@@ -314,6 +314,8 @@ class SoundEngine {
   private defeatAudio: HTMLAudioElement | null = null;
   public isBgmPlaying: boolean = false;
   public bgmEnabled: boolean = true;
+  private wasPlayingBeforeGame: boolean = false;
+  private wasPlayingBeforeBackground: boolean = false;
 
   public autoStartBgmIfEnabled(): void {
     if (typeof window === 'undefined') return;
@@ -324,7 +326,7 @@ class SoundEngine {
     this.playBGM();
 
     const startOnInteract = () => {
-      if (this.bgmEnabled && !this.isBgmPlaying) {
+      if (this.bgmEnabled && !this.isBgmPlaying && !this.wasPlayingBeforeGame) {
         this.playBGM();
       }
       ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(evt => {
@@ -351,7 +353,7 @@ class SoundEngine {
         this.isBgmPlaying = true;
       }).catch(() => {
         const startOnFirstInteract = () => {
-          if (!this.bgmEnabled) return;
+          if (!this.bgmEnabled || this.wasPlayingBeforeGame) return;
           this.bgmAudio?.play().then(() => {
             this.isBgmPlaying = true;
           }).catch(() => {});
@@ -370,6 +372,50 @@ class SoundEngine {
     if (this.bgmAudio) {
       this.bgmAudio.pause();
       this.isBgmPlaying = false;
+    }
+  }
+
+  /**
+   * Automatically pauses BGM when entering a game so game SFX are clear
+   */
+  public pauseBGMForGame(): void {
+    if (this.isBgmPlaying) {
+      this.wasPlayingBeforeGame = true;
+      this.stopBGM();
+    }
+  }
+
+  /**
+   * Resumes BGM after exiting a game if it was playing previously
+   */
+  public resumeBGMFromGame(): void {
+    if (this.wasPlayingBeforeGame && this.bgmEnabled) {
+      this.wasPlayingBeforeGame = false;
+      this.playBGM();
+    } else {
+      this.wasPlayingBeforeGame = false;
+    }
+  }
+
+  /**
+   * Automatically pauses BGM when the app is minimized, tab hidden, or user leaves the app
+   */
+  public pauseBGMForBackground(): void {
+    if (this.isBgmPlaying) {
+      this.wasPlayingBeforeBackground = true;
+      this.stopBGM();
+    }
+  }
+
+  /**
+   * Resumes BGM when app returns to foreground, unless user is actively playing a game
+   */
+  public resumeBGMFromBackground(): void {
+    if (this.wasPlayingBeforeBackground && this.bgmEnabled && !this.wasPlayingBeforeGame) {
+      this.wasPlayingBeforeBackground = false;
+      this.playBGM();
+    } else {
+      this.wasPlayingBeforeBackground = false;
     }
   }
 

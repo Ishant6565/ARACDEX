@@ -14,7 +14,8 @@ import { GameInfo, UserStats, UserProfile } from './types';
 import { loadUserStats, recordGameWin } from './services/storage';
 import { getCurrentUser, hasActiveRealUser, loginWithRealGmail, loginWithOAuthProvider, logoutUser } from './services/auth';
 import { sound } from './services/audio';
-import { supabase, syncLocalWithCloud } from './services/supabase';
+import { supabase, syncLocalWithCloud, closeAuthBrowser } from './services/supabase';
+import { App as CapApp } from '@capacitor/app';
 
 export function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile>(getCurrentUser);
@@ -66,7 +67,105 @@ export function App() {
     sound.autoStartBgmIfEnabled();
   }, []);
 
-  // Listen for Supabase OAuth redirects (Google, GitHub)
+  // Pause BGM when playing a game, resume when returning to menu
+  useEffect(() => {
+    if (activeGame) {
+      sound.pauseBGMForGame();
+    } else {
+      sound.resumeBGMFromGame();
+    }
+  }, [activeGame]);
+
+  // Pause BGM on app background/minimize, resume on foreground, and listen for OAuth deep links
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        sound.pauseBGMForBackground();
+      } else if (!activeGame) {
+        sound.resumeBGMFromBackground();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handleVisibilityChange);
+
+    let appStateListener: any = null;
+    let urlOpenListener: any = null;
+
+    try {
+      CapApp.addListener('appStateChange', (state) => {
+        if (!state.isActive) {
+          sound.pauseBGMForBackground();
+        } else if (!activeGame) {
+          sound.resumeBGMFromBackground();
+        }
+      }).then((l) => {
+        appStateListener = l;
+      });
+
+      // Handle deep link callbacks for Google / GitHub OAuth (e.g. arcadex://auth/callback)
+      CapApp.addListener('appUrlOpen', async (data) => {
+        try {
+          await closeAuthBrowser();
+          const rawUrl = data.url;
+          if (rawUrl.includes('access_token')) {
+            const hashPart = rawUrl.substring(rawUrl.indexOf('#') + 1);
+            const params = new URLSearchParams(hashPart);
+            const accessToken = params.get('access_token');
+            const refreshToken = params.get('refresh_token');
+            if (accessToken) {
+              const { data: sessionData, error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken || '',
+              });
+              if (!error && sessionData?.user) {
+                const u = sessionData.user;
+                const provider = (u.app_metadata?.provider || 'google') as 'google' | 'github';
+                const email = u.email || `${u.user_metadata?.user_name || 'operator'}@${provider}.com`;
+                const name = u.user_metadata?.full_name || u.user_metadata?.user_name || u.user_metadata?.name || email.split('@')[0];
+                const avatar = u.user_metadata?.avatar_url || (provider === 'github' ? '/anime/jinwoo.svg' : '/anime/kakashi.svg');
+                const user = loginWithOAuthProvider(u.id, email, name, avatar, provider);
+                setCurrentUser(user);
+                setStats(user.stats);
+                setHasRealAccount(true);
+              }
+            }
+          } else if (rawUrl.includes('code=')) {
+            const queryPart = rawUrl.substring(rawUrl.indexOf('?') + 1);
+            const params = new URLSearchParams(queryPart);
+            const code = params.get('code');
+            if (code) {
+              const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code);
+              if (!error && sessionData?.user) {
+                const u = sessionData.user;
+                const provider = (u.app_metadata?.provider || 'google') as 'google' | 'github';
+                const email = u.email || `${u.user_metadata?.user_name || 'operator'}@${provider}.com`;
+                const name = u.user_metadata?.full_name || u.user_metadata?.user_name || u.user_metadata?.name || email.split('@')[0];
+                const avatar = u.user_metadata?.avatar_url || (provider === 'github' ? '/anime/jinwoo.svg' : '/anime/kakashi.svg');
+                const user = loginWithOAuthProvider(u.id, email, name, avatar, provider);
+                setCurrentUser(user);
+                setStats(user.stats);
+                setHasRealAccount(true);
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('[App] Deep link auth handler error:', err);
+        }
+      }).then((l) => {
+        urlOpenListener = l;
+      });
+    } catch {}
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handleVisibilityChange);
+      if (appStateListener) appStateListener.remove?.();
+      if (urlOpenListener) urlOpenListener.remove?.();
+    };
+  }, [activeGame]);
+
+  // Listen for Supabase OAuth redirects (Google, GitHub on web)
   useEffect(() => {
     // Check initial session if returning from Google / GitHub OAuth redirect
     supabase.auth.getSession().then(({ data: { session } }) => {

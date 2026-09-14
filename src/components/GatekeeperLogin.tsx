@@ -7,7 +7,13 @@ import {
   getSavedRealAccounts,
   AVAILABLE_AVATARS,
 } from '../services/auth';
-import { signInWithRealGoogle, signInWithGitHub, syncProfileToCloud, isNativeAPK } from '../services/supabase';
+import {
+  signInWithRealGoogle,
+  signInWithGitHub,
+  signInWithEmailPassword,
+  signUpWithEmailPassword,
+  syncProfileToCloud,
+} from '../services/supabase';
 import { sound } from '../services/audio';
 import {
   Mail,
@@ -19,6 +25,10 @@ import {
   ArrowRight,
   UserPlus,
   Zap,
+  KeyRound,
+  Lock,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 interface GatekeeperLoginProps {
@@ -28,10 +38,13 @@ interface GatekeeperLoginProps {
 export const GatekeeperLogin: React.FC<GatekeeperLoginProps> = ({ onLoginSuccess }) => {
   const savedAccounts = getSavedRealAccounts();
   const [showNewAccountForm, setShowNewAccountForm] = useState<boolean>(savedAccounts.length === 0);
-  const [authMode, setAuthMode] = useState<'google' | 'github'>('google');
+  const [authMode, setAuthMode] = useState<'google' | 'password' | 'github'>('google');
 
-  // Direct Google / Gmail form state
-  const [gmailInput, setGmailInput] = useState('');
+  // Password form state
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isRegisteringPassword, setIsRegisteringPassword] = useState(false);
   const [callsignInput, setCallsignInput] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState('/anime/kakashi.svg');
 
@@ -48,76 +61,109 @@ export const GatekeeperLogin: React.FC<GatekeeperLoginProps> = ({ onLoginSuccess
     onLoginSuccess(switched);
   };
 
-  const handleEmailChange = (val: string) => {
-    setGmailInput(val);
-    setErrorMessage('');
-    if (!callsignInput || callsignInput === gmailInput.split('@')[0].toUpperCase()) {
-      const prefix = val.split('@')[0].trim().replace(/[._-]/g, ' ').toUpperCase();
-      setCallsignInput(prefix);
-    }
-  };
-
   const handleGoogleClick = async () => {
     sound.playClick();
     setErrorMessage('');
     setAuthMode('google');
-    setShowNewAccountForm(true);
+    setIsSubmitting(true);
 
-    if (!isNativeAPK()) {
-      setIsSubmitting(true);
+    try {
       const res = await signInWithRealGoogle();
       if (res.error) {
-        // Fallback gracefully to direct Google input without crashing
+        setErrorMessage(res.error.message || 'Google authorization failed. Please try again.');
         setIsSubmitting(false);
       }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Google sign-in error.');
+      setIsSubmitting(false);
     }
   };
 
-  const handleGitHubClick = async () => {
-    sound.playClick();
-    setErrorMessage('');
-    setAuthMode('github');
-    setShowNewAccountForm(true);
-
-    if (!isNativeAPK()) {
-      setIsSubmitting(true);
-      const res = await signInWithGitHub();
-      if (res.error) {
-        setIsSubmitting(false);
-      }
-    }
-  };
-
-  const handleGmailSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
-    let email = gmailInput.trim().toLowerCase();
-    if (!email) {
-      setErrorMessage('Please enter your Google / Gmail address');
+    const email = emailInput.trim().toLowerCase();
+    const password = passwordInput.trim();
+
+    if (!email || !email.includes('@')) {
+      setErrorMessage('Please enter a valid email address');
       return;
     }
 
-    if (!email.includes('@')) {
-      email = `${email}@gmail.com`;
+    if (!password || password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters');
+      return;
     }
 
     sound.playClick();
     setIsSubmitting(true);
 
     try {
-      const newUser = loginWithRealGmail(email, callsignInput, selectedAvatar);
-      syncProfileToCloud(newUser);
-      sound.playSuccess();
-      onLoginSuccess(newUser);
-    } catch (err) {
-      console.error('Login error:', err);
-      setErrorMessage('Failed to initialize account. Please try again.');
+      if (isRegisteringPassword) {
+        const username = callsignInput.trim() || email.split('@')[0].toUpperCase();
+        const { data, error } = await signUpWithEmailPassword(
+          email,
+          password,
+          username,
+          selectedAvatar
+        );
+
+        if (error) {
+          setErrorMessage(error.message);
+          setIsSubmitting(false);
+          return;
+        }
+
+        const newUser = loginWithRealGmail(email, username, selectedAvatar);
+        syncProfileToCloud(newUser);
+        sound.playSuccess();
+        onLoginSuccess(newUser);
+      } else {
+        const { data, error } = await signInWithEmailPassword(email, password);
+
+        if (error) {
+          setErrorMessage(error.message || 'Invalid email or password');
+          setIsSubmitting(false);
+          return;
+        }
+
+        const u = data.user;
+        const username =
+          u?.user_metadata?.full_name ||
+          u?.user_metadata?.user_name ||
+          email.split('@')[0].toUpperCase();
+        const avatar = u?.user_metadata?.avatar_url || selectedAvatar;
+
+        const user = loginWithRealGmail(email, username, avatar);
+        syncProfileToCloud(user);
+        sound.playSuccess();
+        onLoginSuccess(user);
+      }
+    } catch (err: any) {
+      console.error('Password auth error:', err);
+      setErrorMessage(err?.message || 'Authentication failed. Please check your credentials.');
       setIsSubmitting(false);
     }
   };
 
-  const handleGitHubSubmit = async (e: React.FormEvent) => {
+  const handleGitHubOAuthClick = async () => {
+    sound.playClick();
+    setErrorMessage('');
+    setIsSubmitting(true);
+    try {
+      const res = await signInWithGitHub();
+      if (res.error) {
+        setErrorMessage(res.error.message || 'GitHub OAuth failed');
+        setIsSubmitting(false);
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'GitHub login error');
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGitHubUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -135,7 +181,6 @@ export const GatekeeperLogin: React.FC<GatekeeperLoginProps> = ({ onLoginSuccess
       let avatarUrl = '/anime/jinwoo.svg';
       let email = raw.includes('@') ? raw.toLowerCase() : `${raw.toLowerCase()}@github.com`;
 
-      // Fetch public profile from GitHub to get real avatar & name
       try {
         const res = await fetch(`https://api.github.com/users/${encodeURIComponent(raw)}`);
         if (res.ok) {
@@ -240,7 +285,7 @@ export const GatekeeperLogin: React.FC<GatekeeperLoginProps> = ({ onLoginSuccess
                 className="w-full py-2.5 px-3 bg-[#101015] hover:bg-[#181822] border border-white/[0.12] hover:border-cyan-400/50 text-cyan-300 font-mono text-xs uppercase tracking-wider rounded-[3px] flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <UserPlus className="w-3.5 h-3.5 text-cyan-400" />
-                <span>+ LOGIN AS ANOTHER PLAYER</span>
+                <span>+ LOGIN WITH ANOTHER ACCOUNT</span>
               </button>
             </div>
           )}
@@ -264,18 +309,22 @@ export const GatekeeperLogin: React.FC<GatekeeperLoginProps> = ({ onLoginSuccess
                 </div>
               )}
 
-              {/* OAuth Provider Selectors */}
-              <div className="grid grid-cols-2 gap-2">
+              {/* Provider Selectors: Google, Password, GitHub */}
+              <div className="grid grid-cols-3 gap-1.5">
                 <button
                   type="button"
-                  onClick={handleGoogleClick}
-                  className={`py-2.5 px-3 border rounded-[3px] flex items-center justify-center gap-2 font-sans font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+                  onClick={() => {
+                    sound.playClick();
+                    setAuthMode('google');
+                    setErrorMessage('');
+                  }}
+                  className={`py-2 px-2 border rounded-[3px] flex items-center justify-center gap-1.5 font-sans font-bold text-[11px] uppercase tracking-wider transition-all cursor-pointer ${
                     authMode === 'google'
                       ? 'bg-cyan-500/15 border-cyan-400 text-white shadow-[0_0_12px_rgba(6,182,212,0.3)]'
                       : 'bg-[#0f0f14] border-white/[0.12] hover:border-white/30 text-zinc-300'
                   }`}
                 >
-                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
@@ -286,14 +335,35 @@ export const GatekeeperLogin: React.FC<GatekeeperLoginProps> = ({ onLoginSuccess
 
                 <button
                   type="button"
-                  onClick={handleGitHubClick}
-                  className={`py-2.5 px-3 border rounded-[3px] flex items-center justify-center gap-2 font-sans font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+                  onClick={() => {
+                    sound.playClick();
+                    setAuthMode('password');
+                    setErrorMessage('');
+                  }}
+                  className={`py-2 px-2 border rounded-[3px] flex items-center justify-center gap-1.5 font-sans font-bold text-[11px] uppercase tracking-wider transition-all cursor-pointer ${
+                    authMode === 'password'
+                      ? 'bg-cyan-500/15 border-cyan-400 text-white shadow-[0_0_12px_rgba(6,182,212,0.3)]'
+                      : 'bg-[#0f0f14] border-white/[0.12] hover:border-white/30 text-zinc-300'
+                  }`}
+                >
+                  <Lock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span>PASSWORD</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    sound.playClick();
+                    setAuthMode('github');
+                    setErrorMessage('');
+                  }}
+                  className={`py-2 px-2 border rounded-[3px] flex items-center justify-center gap-1.5 font-sans font-bold text-[11px] uppercase tracking-wider transition-all cursor-pointer ${
                     authMode === 'github'
                       ? 'bg-cyan-500/15 border-cyan-400 text-white shadow-[0_0_12px_rgba(6,182,212,0.3)]'
                       : 'bg-[#0f0f14] border-white/[0.12] hover:border-white/30 text-zinc-300'
                   }`}
                 >
-                  <svg className="w-4 h-4 fill-white shrink-0" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 fill-white shrink-0" viewBox="0 0 24 24">
                     <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
                   </svg>
                   <span>GITHUB</span>
@@ -308,30 +378,82 @@ export const GatekeeperLogin: React.FC<GatekeeperLoginProps> = ({ onLoginSuccess
                 </div>
               )}
 
-              {/* FORM A: GOOGLE / GMAIL ACCOUNT */}
+              {/* MODE 1: OFFICIAL GOOGLE OAUTH */}
               {authMode === 'google' && (
+                <div className="space-y-3 text-left bg-[#09090c] border border-cyan-500/30 p-4 rounded-[4px] shadow-[0_0_30px_rgba(0,0,0,0.7)]">
+                  <div className="text-center py-2 space-y-2">
+                    <p className="text-xs font-mono text-zinc-300">
+                      Official Google Authorization (OAuth 2.0)
+                    </p>
+                    <p className="text-[11px] font-sans text-zinc-500">
+                      Tap below to open Google's real account picker and authorization screen.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleGoogleClick}
+                    disabled={isSubmitting}
+                    className="w-full py-3.5 px-4 bg-white hover:bg-zinc-100 text-zinc-900 font-sans font-bold text-xs uppercase tracking-wider rounded-[3px] transition-all shadow-[0_0_25px_rgba(255,255,255,0.2)] active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60"
+                  >
+                    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                    </svg>
+                    <span>{isSubmitting ? 'OPENING GOOGLE SIGN-IN...' : 'CONTINUE WITH GOOGLE'}</span>
+                  </button>
+                </div>
+              )}
+
+              {/* MODE 2: EMAIL & PASSWORD AUTHENTICATION */}
+              {authMode === 'password' && (
                 <form
-                  onSubmit={handleGmailSubmit}
-                  className="space-y-3.5 text-left bg-[#09090c] border border-cyan-500/30 p-4 rounded-[4px] shadow-[0_0_30px_rgba(0,0,0,0.7)]"
+                  onSubmit={handlePasswordSubmit}
+                  className="space-y-3 text-left bg-[#09090c] border border-cyan-500/30 p-4 rounded-[4px] shadow-[0_0_30px_rgba(0,0,0,0.7)]"
                 >
+                  <div className="flex bg-black/60 p-1 rounded-[3px] border border-white/[0.08] text-center font-mono text-[10px]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sound.playClick();
+                        setIsRegisteringPassword(false);
+                        setErrorMessage('');
+                      }}
+                      className={`flex-1 py-1.5 rounded-[2px] transition-colors ${
+                        !isRegisteringPassword ? 'bg-cyan-500/20 text-cyan-300 font-bold' : 'text-zinc-500'
+                      }`}
+                    >
+                      SIGN IN
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sound.playClick();
+                        setIsRegisteringPassword(true);
+                        setErrorMessage('');
+                      }}
+                      className={`flex-1 py-1.5 rounded-[2px] transition-colors ${
+                        isRegisteringPassword ? 'bg-cyan-500/20 text-cyan-300 font-bold' : 'text-zinc-500'
+                      }`}
+                    >
+                      CREATE ACCOUNT
+                    </button>
+                  </div>
+
                   <div className="space-y-1">
-                    <label className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider flex items-center justify-between">
-                      <span>GOOGLE / GMAIL ADDRESS</span>
-                      {gmailInput.endsWith('@gmail.com') && (
-                        <span className="text-emerald-400 text-[9px] flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> GMAIL VERIFIED
-                        </span>
-                      )}
+                    <label className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+                      EMAIL ADDRESS
                     </label>
                     <div className="relative">
                       <input
-                        id="gatekeeper-gmail-input"
                         type="email"
                         required
-                        value={gmailInput}
-                        onChange={e => handleEmailChange(e.target.value)}
-                        placeholder="yourname@gmail.com"
-                        className="w-full pl-9 pr-3 py-2.5 bg-black border border-white/[0.15] focus:border-cyan-400 rounded-[2px] font-mono text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors"
+                        value={emailInput}
+                        onChange={e => setEmailInput(e.target.value)}
+                        placeholder="operator@domain.com"
+                        className="w-full pl-9 pr-3 py-2 bg-black border border-white/[0.15] focus:border-cyan-400 rounded-[2px] font-mono text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors"
                       />
                       <Mail className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     </div>
@@ -339,95 +461,131 @@ export const GatekeeperLogin: React.FC<GatekeeperLoginProps> = ({ onLoginSuccess
 
                   <div className="space-y-1">
                     <label className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
-                      OPERATOR CALLSIGN / DISPLAY NAME
+                      PASSWORD
                     </label>
-                    <input
-                      type="text"
-                      required
-                      value={callsignInput}
-                      onChange={e => setCallsignInput(e.target.value)}
-                      placeholder="e.g. ISHANT GUPTA"
-                      className="w-full px-3 py-2 bg-black border border-white/[0.15] focus:border-cyan-400 rounded-[2px] font-mono text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors uppercase tracking-wider"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
-                      CHOOSE TITAN AVATAR (22 ICONS)
-                    </label>
-                    <div className="grid grid-cols-6 gap-1.5 max-h-24 overflow-y-auto p-1.5 bg-black/60 border border-white/[0.1] rounded-[2px] scrollbar-thin">
-                      {AVAILABLE_AVATARS.map(av => (
-                        <button
-                          type="button"
-                          key={av.id}
-                          onClick={() => {
-                            sound.playClick();
-                            setSelectedAvatar(av.src);
-                          }}
-                          className={`w-full aspect-square rounded-[2px] border overflow-hidden relative transition-all bg-black ${
-                            selectedAvatar === av.src
-                              ? 'border-cyan-400 ring-2 ring-cyan-400/60 scale-105 shadow-[0_0_12px_rgba(6,182,212,0.5)]'
-                              : 'border-white/10 hover:border-white/30'
-                          }`}
-                          title={av.name}
-                        >
-                          <img src={av.src} alt={av.name} className="w-full h-full object-cover" />
-                        </button>
-                      ))}
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        value={passwordInput}
+                        onChange={e => setPasswordInput(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full pl-9 pr-9 py-2 bg-black border border-white/[0.15] focus:border-cyan-400 rounded-[2px] font-mono text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors"
+                      />
+                      <KeyRound className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
                     </div>
                   </div>
+
+                  {isRegisteringPassword && (
+                    <>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+                          CALLSIGN / USERNAME
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={callsignInput}
+                          onChange={e => setCallsignInput(e.target.value)}
+                          placeholder="e.g. TITAN OPERATOR"
+                          className="w-full px-3 py-2 bg-black border border-white/[0.15] focus:border-cyan-400 rounded-[2px] font-mono text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors uppercase tracking-wider"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+                          CHOOSE AVATAR
+                        </label>
+                        <div className="grid grid-cols-6 gap-1.5 max-h-20 overflow-y-auto p-1 bg-black/60 border border-white/[0.1] rounded-[2px] scrollbar-thin">
+                          {AVAILABLE_AVATARS.map(av => (
+                            <button
+                              type="button"
+                              key={av.id}
+                              onClick={() => {
+                                sound.playClick();
+                                setSelectedAvatar(av.src);
+                              }}
+                              className={`w-full aspect-square rounded-[2px] border overflow-hidden relative transition-all bg-black ${
+                                selectedAvatar === av.src
+                                  ? 'border-cyan-400 ring-2 ring-cyan-400/60 scale-105'
+                                  : 'border-white/10 hover:border-white/30'
+                              }`}
+                              title={av.name}
+                            >
+                              <img src={av.src} alt={av.name} className="w-full h-full object-cover" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3 bg-cyan-400 hover:bg-cyan-300 text-black font-mono font-bold text-xs uppercase tracking-wider rounded-[2px] transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] active:scale-95 flex items-center justify-center gap-2 cursor-pointer mt-2"
+                    className="w-full py-3 bg-cyan-400 hover:bg-cyan-300 text-black font-mono font-bold text-xs uppercase tracking-wider rounded-[2px] transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] active:scale-95 flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-60"
                   >
                     <UserCheck className="w-4 h-4 text-black" />
-                    <span>{isSubmitting ? 'INITIALIZING ID...' : 'SIGN IN & ENTER ARCADEX'}</span>
+                    <span>
+                      {isSubmitting
+                        ? 'PROCESSING...'
+                        : isRegisteringPassword
+                        ? 'CREATE ACCOUNT & PLAY'
+                        : 'SIGN IN & ENTER ARCADEX'}
+                    </span>
                   </button>
                 </form>
               )}
 
-              {/* FORM B: GITHUB ACCOUNT */}
+              {/* MODE 3: GITHUB AUTH */}
               {authMode === 'github' && (
-                <form
-                  onSubmit={handleGitHubSubmit}
-                  className="space-y-3.5 text-left bg-[#09090c] border border-cyan-500/30 p-4 rounded-[4px] shadow-[0_0_30px_rgba(0,0,0,0.7)]"
-                >
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
-                      GITHUB USERNAME OR EMAIL
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        required
-                        value={githubInput}
-                        onChange={e => {
-                          setGithubInput(e.target.value);
-                          setErrorMessage('');
-                        }}
-                        placeholder="e.g. Ishant6565"
-                        className="w-full pl-9 pr-3 py-2.5 bg-black border border-white/[0.15] focus:border-cyan-400 rounded-[2px] font-mono text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors"
-                      />
-                      <svg className="w-4 h-4 fill-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24">
-                        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-                      </svg>
-                    </div>
-                    <p className="text-[9px] font-mono text-zinc-400 pt-0.5">
-                      Aapka GitHub profile photo aur username automatically sync ho jayega.
-                    </p>
+                <div className="space-y-3 text-left bg-[#09090c] border border-cyan-500/30 p-4 rounded-[4px] shadow-[0_0_30px_rgba(0,0,0,0.7)]">
+                  <button
+                    type="button"
+                    onClick={handleGitHubOAuthClick}
+                    disabled={isSubmitting}
+                    className="w-full py-3 px-4 bg-[#1f2328] hover:bg-[#2b313a] text-white font-sans font-bold text-xs uppercase tracking-wider rounded-[3px] transition-all border border-white/20 active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60"
+                  >
+                    <svg className="w-4 h-4 fill-white shrink-0" viewBox="0 0 24 24">
+                      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                    </svg>
+                    <span>{isSubmitting ? 'CONNECTING GITHUB...' : 'CONTINUE WITH GITHUB OAUTH'}</span>
+                  </button>
+
+                  <div className="relative flex py-1 items-center">
+                    <div className="flex-grow border-t border-white/10"></div>
+                    <span className="flex-shrink mx-2 text-[9px] font-mono text-zinc-500 uppercase">OR VIA USERNAME</span>
+                    <div className="flex-grow border-t border-white/10"></div>
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full py-3 bg-cyan-400 hover:bg-cyan-300 text-black font-mono font-bold text-xs uppercase tracking-wider rounded-[2px] transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] active:scale-95 flex items-center justify-center gap-2 cursor-pointer mt-2"
-                  >
-                    <UserCheck className="w-4 h-4 text-black" />
-                    <span>{isSubmitting ? 'CONNECTING GITHUB...' : 'CONNECT GITHUB & PLAY'}</span>
-                  </button>
-                </form>
+                  <form onSubmit={handleGitHubUsernameSubmit} className="space-y-2">
+                    <input
+                      type="text"
+                      required
+                      value={githubInput}
+                      onChange={e => {
+                        setGithubInput(e.target.value);
+                        setErrorMessage('');
+                      }}
+                      placeholder="e.g. Ishant6565"
+                      className="w-full px-3 py-2 bg-black border border-white/[0.15] focus:border-cyan-400 rounded-[2px] font-mono text-xs text-white placeholder:text-zinc-600 focus:outline-none transition-colors"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full py-2 bg-[#12141c] hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono text-xs uppercase tracking-wider rounded-[2px] transition-all cursor-pointer"
+                    >
+                      SYNC GITHUB PROFILE & PLAY
+                    </button>
+                  </form>
+                </div>
               )}
             </div>
           )}

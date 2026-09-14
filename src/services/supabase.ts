@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 import { UserProfile, UserStats } from '../types';
 
 export const SUPABASE_URL = 'https://tyknltahtunelubmjiub.supabase.co';
@@ -16,14 +17,31 @@ export function isNativeAPK(): boolean {
   return typeof window !== 'undefined' && Capacitor.isNativePlatform();
 }
 
+export async function closeAuthBrowser(): Promise<void> {
+  try {
+    await Browser.close();
+  } catch {}
+}
+
 /**
  * Google Sign In through Supabase
- * In native Android APK, standard WebView OAuth is blocked by Google policy (Error 403: disallowed_useragent).
- * We report isNativeAPK so the UI can activate instant Direct Google Account access.
+ * In native Android APK, opens Google OAuth in Chrome Custom Tabs via @capacitor/browser,
+ * which Google fully supports (avoiding WebView 403 disallowed_useragent).
  */
 export async function signInWithRealGoogle(): Promise<{ error: any; isNative?: boolean }> {
   try {
     if (isNativeAPK()) {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: 'arcadex://auth/callback',
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        await Browser.open({ url: data.url, windowName: '_system' });
+      }
       return { error: null, isNative: true };
     }
     const { error } = await supabase.auth.signInWithOAuth({
@@ -44,6 +62,17 @@ export async function signInWithRealGoogle(): Promise<{ error: any; isNative?: b
 export async function signInWithGitHub(): Promise<{ error: any; isNative?: boolean }> {
   try {
     if (isNativeAPK()) {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: 'arcadex://auth/callback',
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        await Browser.open({ url: data.url, windowName: '_system' });
+      }
       return { error: null, isNative: true };
     }
     const { error } = await supabase.auth.signInWithOAuth({
@@ -55,6 +84,46 @@ export async function signInWithGitHub(): Promise<{ error: any; isNative?: boole
     return { error };
   } catch (err) {
     return { error: err };
+  }
+}
+
+/**
+ * Sign In with Email & Password via Supabase Auth
+ */
+export async function signInWithEmailPassword(email: string, password: string) {
+  try {
+    return await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+  } catch (err: any) {
+    return { data: { user: null, session: null }, error: err };
+  }
+}
+
+/**
+ * Sign Up with Email & Password via Supabase Auth
+ */
+export async function signUpWithEmailPassword(
+  email: string,
+  password: string,
+  username: string,
+  avatar: string = '/anime/kakashi.svg'
+) {
+  try {
+    return await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: username,
+          user_name: username,
+          avatar_url: avatar,
+        },
+      },
+    });
+  } catch (err: any) {
+    return { data: { user: null, session: null }, error: err };
   }
 }
 
