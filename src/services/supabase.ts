@@ -24,14 +24,10 @@ export async function closeAuthBrowser(): Promise<void> {
 }
 
 /**
- * Google Sign In through Supabase
+ * Google Sign In through Supabase (Works in Web and APK via custom user-agent)
  */
-export async function signInWithRealGoogle(): Promise<{ error: any; isNative?: boolean }> {
+export async function signInWithRealGoogle(): Promise<{ error: any }> {
   try {
-    if (isNativeAPK()) {
-      // In native APK, do not open external browser as Supabase redirects to an external domain.
-      return { error: null, isNative: true };
-    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -47,11 +43,8 @@ export async function signInWithRealGoogle(): Promise<{ error: any; isNative?: b
 /**
  * GitHub Sign In through Supabase
  */
-export async function signInWithGitHub(): Promise<{ error: any; isNative?: boolean }> {
+export async function signInWithGitHub(): Promise<{ error: any }> {
   try {
-    if (isNativeAPK()) {
-      return { error: null, isNative: true };
-    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
