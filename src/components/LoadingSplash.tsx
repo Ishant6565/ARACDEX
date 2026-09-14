@@ -48,12 +48,12 @@ export const LoadingSplash: React.FC<{ onFinish: () => void }> = ({ onFinish }) 
       <div className="absolute bottom-1/4 left-1/3 w-64 h-64 bg-blue-600/10 blur-[100px] rounded-full pointer-events-none" />
 
       <div className="relative z-10 flex flex-col items-center max-w-sm w-full text-center">
-        {/* Glowing Monolith Logo */}
+        {/* Glowing Monolith Snowflake Logo */}
         <div className="relative mb-6">
-          <div className="w-16 h-16 rounded-[4px] bg-gradient-to-tr from-cyan-400 to-blue-500 text-black flex items-center justify-center font-display font-black text-3xl shadow-[0_0_40px_rgba(6,182,212,0.8)] animate-pulse">
-            A
+          <div className="w-20 h-20 rounded-2xl bg-black/80 border border-cyan-500/40 p-1.5 flex items-center justify-center shadow-[0_0_40px_rgba(6,182,212,0.8)] animate-pulse">
+            <img src="/logo.png" alt="ARCADEX Logo" className="w-full h-full object-contain" />
           </div>
-          <div className="absolute -inset-2 rounded-[6px] border border-cyan-400/40 animate-ping pointer-events-none" />
+          <div className="absolute -inset-2 rounded-2xl border border-cyan-400/40 animate-ping pointer-events-none" />
         </div>
 
         {/* Brand Typography */}

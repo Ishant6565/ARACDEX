@@ -67,12 +67,12 @@ export const GatekeeperLogin: React.FC<GatekeeperLoginProps> = ({ onLoginSuccess
 
       <div className="min-h-full w-full flex flex-col items-center justify-start sm:justify-center p-4 py-6 sm:py-10">
         <div className="relative z-10 w-full max-w-md my-auto flex flex-col items-center text-center">
-          {/* Glowing Logo & Title */}
-          <div className="relative mb-3">
-            <div className="w-13 h-13 rounded-[4px] bg-gradient-to-tr from-cyan-400 to-blue-500 text-black flex items-center justify-center font-display font-black text-2xl shadow-[0_0_35px_rgba(6,182,212,0.7)]">
-              A
+          {/* Glowing Snowflake Logo & Title */}
+          <div className="relative mb-4">
+            <div className="w-18 h-18 rounded-2xl bg-black/80 border border-cyan-500/40 p-1 flex items-center justify-center shadow-[0_0_35px_rgba(6,182,212,0.7)]">
+              <img src="/logo.png" alt="ARCADEX Logo" className="w-full h-full object-contain" />
             </div>
-            <div className="absolute -inset-1.5 rounded-[6px] border border-cyan-400/40 animate-ping pointer-events-none" />
+            <div className="absolute -inset-1.5 rounded-2xl border border-cyan-400/30 animate-ping pointer-events-none" />
           </div>
 
           <span className="font-mono text-[10px] text-cyan-400 tracking-[0.3em] uppercase block font-bold mb-1">

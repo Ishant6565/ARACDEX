@@ -76,17 +76,18 @@ jobs:
         if: startsWith(github.ref, 'refs/heads/main')
         with:
           tag_name: v1.0.0
-          name: "ARCADEX v1.0.0 Android APK"
+          name: "ARCADEX Android APK (Official Snowflake Edition)"
           body: |
-            ## 🕹️ ARCADEX v1.0.0 Native Android App
+            ## 🕹️ ARCADEX Native Android App
             
-            - 13 Full Arcade Games (100 levels each)
-            - Cross-Device Cloud Sync via Supabase
-            - Native 60 FPS Android Performance
-            - Offline PWA / Local Storage Sync
+            - ✨ **Official Cyber Snowflake Logo & Icon**: Pristine centered glowing emblem with adaptive & round launcher support
+            - 🎮 **13 Full Arcade Protocols** (100 progressive tiers each)
+            - ⚡ **Zero-Latency 60 FPS Performance**
+            - ☁️ **Cross-Device Cloud Sync** via Supabase
+            - 📱 **Offline Mode** & Android edge-to-edge safe-area layout
             
             ### 📥 Download & Install
-            Download **ARCADEX-v1.0.apk** below and open it on your Android phone to install!
+            Download **ARCADEX-v1.0.apk** below and tap to install on your Android device!
           files: build-output/ARCADEX-v1.0.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
