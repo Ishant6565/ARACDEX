@@ -16,9 +16,9 @@ export const INITIAL_GUEST_STATS: UserStats = {
 
 const DEFAULT_GUEST_USER: UserProfile = {
   id: 'guest_primary',
-  username: 'GUEST OPERATOR',
-  email: 'operator@arcadex.local',
-  avatar: '/anime/gojo.svg',
+  username: 'GMAIL OPERATOR',
+  email: '',
+  avatar: '/anime/kakashi.svg',
   provider: 'guest',
   createdAt: new Date().toISOString(),
   stats: { ...INITIAL_GUEST_STATS },
@@ -26,12 +26,12 @@ const DEFAULT_GUEST_USER: UserProfile = {
 };
 
 export const AVAILABLE_AVATARS = [
+  { id: 'kakashi', name: 'Kakashi Hatake', src: '/anime/kakashi.svg', anime: 'Naruto' },
   { id: 'gojo', name: 'Gojo Satoru', src: '/anime/gojo.svg', anime: 'Jujutsu Kaisen' },
   { id: 'sukuna', name: 'Ryomen Sukuna', src: '/anime/sukuna.svg', anime: 'Jujutsu Kaisen' },
   { id: 'naruto', name: 'Naruto Uzumaki', src: '/anime/naruto.svg', anime: 'Naruto' },
   { id: 'sasuke', name: 'Sasuke Uchiha', src: '/anime/sasuke.svg', anime: 'Naruto' },
   { id: 'itachi', name: 'Itachi Uchiha', src: '/anime/itachi.svg', anime: 'Naruto' },
-  { id: 'kakashi', name: 'Kakashi Hatake', src: '/anime/kakashi.svg', anime: 'Naruto' },
   { id: 'luffy', name: 'Monkey D. Luffy', src: '/anime/luffy.svg', anime: 'One Piece' },
   { id: 'zoro', name: 'Roronoa Zoro', src: '/anime/zoro.svg', anime: 'One Piece' },
   { id: 'sanji', name: 'Vinsmoke Sanji', src: '/anime/sanji.svg', anime: 'One Piece' },
@@ -59,19 +59,15 @@ export function getAllAccounts(): Record<string, UserProfile> {
       localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(initial));
       return initial;
     }
-    const accounts = JSON.parse(raw);
-    let modified = false;
-    for (const key of Object.keys(accounts)) {
-      if (accounts[key]?.username && accounts[key].username.toLowerCase().includes('ishant sharma')) {
-        accounts[key].username = 'KAKASHI HATAKE';
-        accounts[key].email = 'kakashi.hatake@gmail.com';
-        accounts[key].avatar = '/anime/kakashi.svg';
-        modified = true;
-      }
-    }
-    if (modified) {
+    const accounts: Record<string, UserProfile> = JSON.parse(raw);
+    
+    // If real accounts exist, prune the temporary guest account
+    const nonGuestKeys = Object.keys(accounts).filter(k => k !== 'guest_primary');
+    if (nonGuestKeys.length > 0 && accounts['guest_primary']) {
+      delete accounts['guest_primary'];
       localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
     }
+
     return accounts;
   } catch {
     return { [DEFAULT_GUEST_USER.id]: DEFAULT_GUEST_USER };
@@ -94,7 +90,13 @@ export function getCurrentUser(): UserProfile {
     return accounts[currentId];
   }
   
-  // If currentId doesn't exist, pick first or fallback to guest
+  // If currentId doesn't exist, pick the first real account
+  const nonGuestKey = Object.keys(accounts).find(k => k !== 'guest_primary');
+  if (nonGuestKey && accounts[nonGuestKey]) {
+    localStorage.setItem(CURRENT_USER_KEY, nonGuestKey);
+    return accounts[nonGuestKey];
+  }
+
   const firstId = Object.keys(accounts)[0];
   if (firstId && accounts[firstId]) {
     localStorage.setItem(CURRENT_USER_KEY, firstId);
@@ -113,32 +115,122 @@ export function setCurrentUserId(userId: string): UserProfile {
   return getCurrentUser();
 }
 
-export function loginWithGoogle(email: string, name: string, customAvatar?: string): UserProfile {
+export function hasActiveRealUser(): boolean {
+  if (typeof window === 'undefined') return false;
+  const current = getCurrentUser();
+  return Boolean(current && current.id !== 'guest_primary' && current.email && current.email.includes('@'));
+}
+
+/**
+ * Real Gmail Sign In: registers / switches to user's verified Gmail account
+ */
+export function loginWithRealGmail(email: string, callsign?: string, customAvatar?: string): UserProfile {
   const accounts = getAllAccounts();
-  const userId = `google_${email.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+  let cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail.includes('@')) {
+    cleanEmail = `${cleanEmail}@gmail.com`;
+  }
+
+  // Derive callsign from email if not given
+  const derivedName = callsign?.trim()
+    ? callsign.trim().toUpperCase()
+    : cleanEmail.split('@')[0].replace(/[._-]/g, ' ').toUpperCase();
+
+  const userId = `gmail_${cleanEmail.replace(/[^a-z0-9]/g, '_')}`;
+
+  // Preserve existing guest stats if migrating first time
+  const guestUser = accounts['guest_primary'];
+  const inheritedStats = guestUser ? { ...guestUser.stats } : { ...INITIAL_GUEST_STATS };
 
   if (accounts[userId]) {
-    // Existing user: log in
+    // Existing user: update name/avatar if changed and switch
+    accounts[userId] = {
+      ...accounts[userId],
+      username: derivedName || accounts[userId].username,
+      avatar: customAvatar || accounts[userId].avatar,
+      email: cleanEmail,
+    };
+    delete accounts['guest_primary'];
+    saveAccounts(accounts);
     localStorage.setItem(CURRENT_USER_KEY, userId);
     return accounts[userId];
   }
 
-  // Create new profile for this Google Account
+  // Create real Gmail account profile
   const newProfile: UserProfile = {
     id: userId,
-    username: name.toUpperCase() || 'GOOGLE OPERATOR',
-    email: email.toLowerCase(),
-    avatar: customAvatar || '/anime/gojo.svg',
+    username: derivedName,
+    email: cleanEmail,
+    avatar: customAvatar || '/anime/kakashi.svg',
     provider: 'google',
     createdAt: new Date().toISOString(),
-    stats: { ...INITIAL_GUEST_STATS },
-    recentActivity: [],
+    stats: inheritedStats,
+    recentActivity: guestUser?.recentActivity || [],
   };
 
+  delete accounts['guest_primary'];
   accounts[userId] = newProfile;
   saveAccounts(accounts);
   localStorage.setItem(CURRENT_USER_KEY, userId);
   return newProfile;
+}
+
+export function loginWithGoogle(email: string, name: string, customAvatar?: string): UserProfile {
+  return loginWithRealGmail(email, name, customAvatar);
+}
+
+export function loginWithGitHubAccount(usernameOrEmail: string, displayName?: string, avatarUrl?: string): UserProfile {
+  const accounts = getAllAccounts();
+  const cleanInput = usernameOrEmail.trim();
+  const email = cleanInput.includes('@') ? cleanInput.toLowerCase() : `${cleanInput.toLowerCase()}@github.user`;
+  const name = displayName?.trim() ? displayName.trim().toUpperCase() : cleanInput.toUpperCase();
+  const userId = `github_${cleanInput.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+
+  const guestUser = accounts['guest_primary'];
+  const inheritedStats = guestUser ? { ...guestUser.stats } : { ...INITIAL_GUEST_STATS };
+
+  if (accounts[userId]) {
+    accounts[userId] = {
+      ...accounts[userId],
+      username: name || accounts[userId].username,
+      avatar: avatarUrl || accounts[userId].avatar,
+      email: email,
+    };
+    delete accounts['guest_primary'];
+    saveAccounts(accounts);
+    localStorage.setItem(CURRENT_USER_KEY, userId);
+    return accounts[userId];
+  }
+
+  const newProfile: UserProfile = {
+    id: userId,
+    username: name,
+    email: email,
+    avatar: avatarUrl || '/anime/jinwoo.svg',
+    provider: 'github',
+    createdAt: new Date().toISOString(),
+    stats: inheritedStats,
+    recentActivity: guestUser?.recentActivity || [],
+  };
+
+  delete accounts['guest_primary'];
+  accounts[userId] = newProfile;
+  saveAccounts(accounts);
+  localStorage.setItem(CURRENT_USER_KEY, userId);
+  return newProfile;
+}
+
+export function loginWithOAuthProvider(
+  authUid: string,
+  email: string,
+  displayName: string,
+  avatarUrl: string,
+  provider: 'google' | 'github'
+): UserProfile {
+  if (provider === 'github') {
+    return loginWithGitHubAccount(email, displayName, avatarUrl);
+  }
+  return loginWithRealGmail(email, displayName, avatarUrl);
 }
 
 export function registerCustomUser(username: string, email: string, avatar: string): UserProfile {

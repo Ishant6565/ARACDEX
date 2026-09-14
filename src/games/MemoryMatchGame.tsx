@@ -28,16 +28,18 @@ export const MemoryMatchGame: React.FC<{ onComplete?: (score: number) => void }>
     };
   }, []);
 
-  // Pair count based on level:
-  // 1-20: 4 pairs (8 cards)
-  // 21-50: 6 pairs (12 cards)
-  // 51-80: 8 pairs (16 cards)
-  // 81-100: 10 pairs (20 cards)
+  // Pair count based on level progression:
+  // 1-15: 4 pairs (8 cards)
+  // 16-35: 6 pairs (12 cards)
+  // 36-60: 8 pairs (16 cards - 4x4 matrix)
+  // 61-85: 10 pairs (20 cards)
+  // 86-100: 12 pairs (24 cards)
   const pairCount = useMemo(() => {
-    if (level <= 20) return 4;
-    if (level <= 50) return 6;
-    if (level <= 80) return 8;
-    return 10;
+    if (level <= 15) return 4;
+    if (level <= 35) return 6;
+    if (level <= 60) return 8;
+    if (level <= 85) return 10;
+    return 12;
   }, [level]);
 
   const [cards, setCards] = useState<Card[]>([]);
@@ -156,10 +158,12 @@ export const MemoryMatchGame: React.FC<{ onComplete?: (score: number) => void }>
   const gridColsClass = pairCount === 4 
     ? 'grid-cols-4 max-w-xs' 
     : pairCount === 6 
-    ? 'grid-cols-4 max-w-sm' 
+    ? 'grid-cols-3 sm:grid-cols-4 max-w-xs sm:max-w-sm' 
     : pairCount === 8 
     ? 'grid-cols-4 max-w-sm' 
-    : 'grid-cols-5 max-w-md';
+    : pairCount === 10
+    ? 'grid-cols-4 sm:grid-cols-5 max-w-sm sm:max-w-md'
+    : 'grid-cols-4 sm:grid-cols-6 max-w-md';
 
   return (
     <div className="flex flex-col items-center w-full max-w-md mx-auto select-none">

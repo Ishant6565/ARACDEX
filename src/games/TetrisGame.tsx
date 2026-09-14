@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { sound } from '../services/audio';
+import { haptics } from '../services/haptics';
 import { recordGameWin, getGameLevel, setGameLevel } from '../services/storage';
 import { RotateCcw, ArrowLeft, ArrowRight, RotateCw, Zap, Layers, Trophy, CheckCircle } from 'lucide-react';
 
@@ -36,6 +37,7 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [showLevelPicker, setShowLevelPicker] = useState<boolean>(false);
   const [levelClearedMessage, setLevelClearedMessage] = useState<boolean>(false);
+  const [clearingLines, setClearingLines] = useState<number[]>([]);
 
   // Keep references to prevent stale closures
   const gridRef = useRef<string[][]>(grid);
@@ -87,7 +89,7 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
     return rotated;
   };
 
-  // Synchronous atomic lock function
+  // Synchronous atomic lock function with line clear laser effect
   const lockPieceAndAdvance = useCallback((pieceToLock: Piece, currentGrid: string[][]) => {
     sound.playDrop();
 
@@ -105,50 +107,70 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
     });
 
     // Check full lines
-    let clearedLines = 0;
-    const filteredGrid = newGrid.filter(row => {
-      const isFull = row.every(cell => cell !== '');
-      if (isFull) clearedLines++;
-      return !isFull;
+    const fullRowIndices: number[] = [];
+    newGrid.forEach((row, r) => {
+      if (row.every(cell => cell !== '')) {
+        fullRowIndices.push(r);
+      }
     });
 
-    while (filteredGrid.length < ROWS) {
-      filteredGrid.unshift(Array(COLS).fill(''));
-    }
-
-    if (clearedLines > 0) {
+    if (fullRowIndices.length > 0) {
       sound.playSuccess();
-      const points = [0, 100, 300, 500, 800][clearedLines] * level;
-      setScore(s => {
-        const newScore = s + points;
-        return newScore;
-      });
-      setLines(l => l + clearedLines);
-      
-      setLinesInLevel(curr => {
-        const nextLines = curr + clearedLines;
-        // 2 lines needed per level to advance (or 100 levels progression)
-        if (nextLines >= 2) {
-          setLevel(prevLvl => {
-            const nextLvl = Math.min(100, prevLvl + 1);
-            setGameLevel('tetris', nextLvl);
-            recordGameWin('tetris', score + points, 'TETRIS MATRIX', prevLvl);
-            onComplete?.(score + points);
-            setLevelClearedMessage(true);
-            setTimeout(() => setLevelClearedMessage(false), 2000);
-            return nextLvl;
-          });
-          return 0;
+      haptics.streak();
+      setClearingLines(fullRowIndices);
+      setGrid(newGrid);
+      gridRef.current = newGrid;
+      setCurrentPiece(null);
+
+      setTimeout(() => {
+        const clearedLines = fullRowIndices.length;
+        const filteredGrid = newGrid.filter((_, idx) => !fullRowIndices.includes(idx));
+        while (filteredGrid.length < ROWS) {
+          filteredGrid.unshift(Array(COLS).fill(''));
         }
-        return nextLines;
-      });
+
+        const points = [0, 100, 300, 500, 800][clearedLines] * level;
+        setScore(s => s + points);
+        setLines(l => l + clearedLines);
+
+        setLinesInLevel(curr => {
+          const nextLines = curr + clearedLines;
+          if (nextLines >= 2) {
+            setLevel(prevLvl => {
+              const nextLvl = Math.min(100, prevLvl + 1);
+              setGameLevel('tetris', nextLvl);
+              recordGameWin('tetris', score + points, 'TETRIS MATRIX', prevLvl);
+              onComplete?.(score + points);
+              setLevelClearedMessage(true);
+              setTimeout(() => setLevelClearedMessage(false), 2000);
+              return nextLvl;
+            });
+            return 0;
+          }
+          return nextLines;
+        });
+
+        setGrid(filteredGrid);
+        gridRef.current = filteredGrid;
+        setClearingLines([]);
+
+        const nextPiece = getRandomPiece();
+        if (checkCollision(nextPiece, filteredGrid)) {
+          sound.playDefeat();
+          setIsGameOver(true);
+          setCurrentPiece(null);
+        } else {
+          setCurrentPiece(nextPiece);
+        }
+      }, 200);
+      return;
     }
 
-    setGrid(filteredGrid);
-    gridRef.current = filteredGrid;
+    setGrid(newGrid);
+    gridRef.current = newGrid;
 
     const nextPiece = getRandomPiece();
-    if (checkCollision(nextPiece, filteredGrid)) {
+    if (checkCollision(nextPiece, newGrid)) {
       sound.playDefeat();
       setIsGameOver(true);
       setCurrentPiece(null);
@@ -161,7 +183,7 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
   const hardDrop = useCallback(() => {
     const piece = pieceRef.current;
     const currentGrid = gridRef.current;
-    if (!piece || isGameOverRef.current || isPausedRef.current) return;
+    if (!piece || isGameOverRef.current || isPausedRef.current || clearingLines.length > 0) return;
 
     let dropOffset = 0;
     while (!checkCollision(piece, currentGrid, 0, dropOffset + 1)) {
@@ -169,7 +191,7 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
     }
     const finalPiece = { ...piece, y: piece.y + dropOffset };
     lockPieceAndAdvance(finalPiece, currentGrid);
-  }, [lockPieceAndAdvance]);
+  }, [lockPieceAndAdvance, clearingLines.length]);
 
   // Calculate Ghost Piece position
   const getGhostY = (): number => {
@@ -190,6 +212,7 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
     setScore(0);
     setLines(0);
     setLinesInLevel(0);
+    setClearingLines([]);
     setIsGameOver(false);
     setIsPaused(false);
   }, []);
@@ -208,13 +231,13 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
 
   // Gravity interval scales smoothly from level 1 (700ms) to level 100 (60ms)
   useEffect(() => {
-    if (isGameOver || isPaused || showLevelPicker || !currentPiece) return;
+    if (isGameOver || isPaused || showLevelPicker || !currentPiece || clearingLines.length > 0) return;
 
     const dropSpeed = Math.max(60, 700 - (level - 1) * 6.5);
     const interval = setInterval(() => {
       const piece = pieceRef.current;
       const currentGrid = gridRef.current;
-      if (!piece) return;
+      if (!piece || clearingLines.length > 0) return;
 
       if (!checkCollision(piece, currentGrid, 0, 1)) {
         setCurrentPiece(p => (p ? { ...p, y: p.y + 1 } : null));
@@ -224,10 +247,10 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
     }, dropSpeed);
 
     return () => clearInterval(interval);
-  }, [level, isGameOver, isPaused, showLevelPicker, currentPiece, lockPieceAndAdvance]);
+  }, [level, isGameOver, isPaused, showLevelPicker, currentPiece, clearingLines.length, lockPieceAndAdvance]);
 
   const moveLeft = () => {
-    if (!currentPiece || isGameOver || isPaused) return;
+    if (!currentPiece || isGameOver || isPaused || clearingLines.length > 0) return;
     if (!checkCollision(currentPiece, grid, -1, 0)) {
       sound.playMove();
       setCurrentPiece({ ...currentPiece, x: currentPiece.x - 1 });
@@ -235,7 +258,7 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
   };
 
   const moveRight = () => {
-    if (!currentPiece || isGameOver || isPaused) return;
+    if (!currentPiece || isGameOver || isPaused || clearingLines.length > 0) return;
     if (!checkCollision(currentPiece, grid, 1, 0)) {
       sound.playMove();
       setCurrentPiece({ ...currentPiece, x: currentPiece.x + 1 });
@@ -243,7 +266,7 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
   };
 
   const moveDown = () => {
-    if (!currentPiece || isGameOver || isPaused) return;
+    if (!currentPiece || isGameOver || isPaused || clearingLines.length > 0) return;
     if (!checkCollision(currentPiece, grid, 0, 1)) {
       sound.playMove();
       setCurrentPiece({ ...currentPiece, y: currentPiece.y + 1 });
@@ -251,7 +274,7 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
   };
 
   const rotate = () => {
-    if (!currentPiece || isGameOver || isPaused) return;
+    if (!currentPiece || isGameOver || isPaused || clearingLines.length > 0) return;
     const rotated = rotatePiece(currentPiece);
     if (!checkCollision({ ...currentPiece, shape: rotated }, grid)) {
       sound.playRotate();
@@ -334,10 +357,11 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
       <div className="relative p-1 bg-[#070707] border border-cyan-500/20 rounded-[2px] grid grid-cols-10 grid-rows-20 gap-0.5 w-60 aspect-[10/20] shadow-[0_0_25px_rgba(6,182,212,0.15)] overflow-hidden">
         {grid.map((row, r) =>
           row.map((color, c) => {
+            const isClearing = clearingLines.includes(r);
             let activeColor = color;
             let isGhost = false;
 
-            if (currentPiece) {
+            if (currentPiece && !isClearing) {
               const pr = r - currentPiece.y;
               const pc = c - currentPiece.x;
               if (
@@ -367,18 +391,29 @@ export const TetrisGame: React.FC<{ onComplete?: (score: number) => void }> = ({
             return (
               <div
                 key={`${r}-${c}`}
-                className={`w-full h-full rounded-[1px] transition-colors duration-75 ${
-                  activeColor
+                className={`w-full h-full rounded-[1px] transition-all duration-75 ${
+                  isClearing
+                    ? 'tetris-laser-row bg-white shadow-[0_0_20px_rgba(34,211,238,1)]'
+                    : activeColor
                     ? 'border border-white/20 shadow-sm'
                     : isGhost
                     ? 'border border-dashed border-cyan-400/30 bg-cyan-500/[0.03]'
                     : 'bg-[#0e0e0e] border border-white/[0.03]'
                 }`}
-                style={{ backgroundColor: activeColor || undefined }}
+                style={{ backgroundColor: isClearing ? '#ffffff' : activeColor || undefined }}
               />
             );
           })
         )}
+
+        {/* Laser Clear Horizontal Beams */}
+        {clearingLines.map(r => (
+          <div
+            key={`laser-${r}`}
+            style={{ top: `${(r / ROWS) * 100}%`, height: `${100 / ROWS}%` }}
+            className="absolute inset-x-0 bg-gradient-to-r from-transparent via-cyan-200 to-transparent opacity-95 pointer-events-none shadow-[0_0_35px_rgba(6,182,212,1)] z-30 animate-pulse"
+          />
+        ))}
 
         {isGameOver && (
           <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center z-30">

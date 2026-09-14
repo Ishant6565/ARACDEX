@@ -28,6 +28,7 @@
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.7.2",
+    "untun": "^0.2.2",
     "vite": "^6.2.0"
   }
 }

@@ -16,8 +16,25 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
  */
 export async function signInWithRealGoogle(): Promise<{ error: any }> {
   try {
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+    return { error };
+  } catch (err) {
+    return { error: err };
+  }
+}
+
+/**
+ * Genuine GitHub OAuth through Supabase -> github.com
+ */
+export async function signInWithGitHub(): Promise<{ error: any }> {
+  try {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
       options: {
         redirectTo: window.location.origin,
       },
@@ -53,6 +70,7 @@ export async function getActiveGoogleUser(): Promise<{ email: string; name: stri
 export async function syncProfileToCloud(user: UserProfile): Promise<void> {
   if (!user || !user.id) return;
   try {
+    // 1. Store in public.profiles table (viewable in Table Editor)
     await supabase.from('profiles').upsert(
       {
         user_id: user.id,
@@ -63,6 +81,25 @@ export async function syncProfileToCloud(user: UserProfile): Promise<void> {
       },
       { onConflict: 'user_id' }
     );
+
+    // 2. Also register in Supabase Authentication -> Users so they show up in the Auth Users dashboard
+    if (user.email && user.email.includes('@')) {
+      const deterministicPassword = `Arcadex@${user.email.replace(/[^a-zA-Z0-9]/g, '')}!2026`;
+      supabase.auth.signUp({
+        email: user.email,
+        password: deterministicPassword,
+        options: {
+          data: {
+            full_name: user.username,
+            user_name: user.username,
+            avatar_url: user.avatar,
+          },
+        },
+      }).catch(err => {
+        // Silently ignore if already registered in auth or rate limited
+        console.debug('[Supabase Auth] Background register note:', err?.message);
+      });
+    }
   } catch (err) {
     console.warn('[Supabase] Profile sync skipped (offline or table pending):', err);
   }

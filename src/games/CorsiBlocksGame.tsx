@@ -3,24 +3,58 @@ import { sound } from '../services/audio';
 import { recordGameWin, getGameLevel, setGameLevel } from '../services/storage';
 import { RotateCcw, Activity, Award, CheckCircle, Layers, Trophy } from 'lucide-react';
 
-const FREQUENCIES = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33];
+// Dynamic scale based on level:
+// Levels 1-25: 3x3 (9 blocks)
+// Levels 26-60: 4x4 (16 blocks)
+// Levels 61-100: 5x5 (25 blocks)
+const getGridDimension = (level: number): number => {
+  if (level <= 25) return 3;
+  if (level <= 60) return 4;
+  return 5;
+};
 
-// 9 spatial positions spread across canvas
-const BLOCKS = [
-  { id: 0, x: 15, y: 15 },
-  { id: 1, x: 50, y: 20 },
-  { id: 2, x: 80, y: 15 },
-  { id: 3, x: 25, y: 50 },
-  { id: 4, x: 55, y: 55 },
-  { id: 5, x: 85, y: 50 },
-  { id: 6, x: 18, y: 82 },
-  { id: 7, x: 48, y: 85 },
-  { id: 8, x: 78, y: 80 },
-];
+// Generates musical frequency for index
+const getNoteFrequency = (index: number): number => {
+  const baseFreq = 220; // A3
+  const semitones = [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19, 21, 23, 24, 26, 28, 29, 31, 33, 35, 36, 38, 40, 41];
+  const st = semitones[index % semitones.length];
+  return baseFreq * Math.pow(2, st / 12);
+};
+
+interface CorsiBlock {
+  id: number;
+  x: number;
+  y: number;
+}
 
 export const CorsiBlocksGame: React.FC<{ onComplete?: (score: number) => void }> = ({ onComplete }) => {
   const [level, setLevel] = useState<number>(() => getGameLevel('corsi'));
   const [showLevelPicker, setShowLevelPicker] = useState<boolean>(false);
+
+  const gridDimension = useMemo(() => getGridDimension(level), [level]);
+  const totalBlocks = gridDimension * gridDimension;
+
+  // Dynamically compute spatial coordinates based on grid dimension with organic jitter
+  const blocks: CorsiBlock[] = useMemo(() => {
+    const result: CorsiBlock[] = [];
+    const step = 100 / gridDimension;
+    for (let r = 0; r < gridDimension; r++) {
+      for (let c = 0; c < gridDimension; c++) {
+        const id = r * gridDimension + c;
+        const baseX = (c + 0.5) * step;
+        const baseY = (r + 0.5) * step;
+        // Deterministic organic jitter for natural spatial memory testing
+        const jitterX = (((id * 7 + 3) % 7) - 3) * (gridDimension === 5 ? 1.4 : 2.2);
+        const jitterY = (((id * 11 + 5) % 7) - 3) * (gridDimension === 5 ? 1.4 : 2.2);
+        result.push({
+          id,
+          x: Math.max(10, Math.min(90, Math.round(baseX + jitterX))),
+          y: Math.max(10, Math.min(90, Math.round(baseY + jitterY))),
+        });
+      }
+    }
+    return result;
+  }, [gridDimension]);
 
   const spanLength = useMemo(() => {
     return 3 + Math.min(12, Math.floor((level - 1) / 8));
@@ -46,7 +80,7 @@ export const CorsiBlocksGame: React.FC<{ onComplete?: (score: number) => void }>
     };
   }, []);
 
-  const generateAndPlaySequence = useCallback((curLvl: number, len: number) => {
+  const generateAndPlaySequence = useCallback((curLvl: number, len: number, count: number) => {
     clearAllTimeouts();
     setIsShowingSequence(true);
     setPlayerInput([]);
@@ -56,17 +90,17 @@ export const CorsiBlocksGame: React.FC<{ onComplete?: (score: number) => void }>
 
     const newSeq: number[] = [];
     for (let i = 0; i < len; i++) {
-      newSeq.push(Math.floor(Math.random() * 9));
+      newSeq.push(Math.floor(Math.random() * count));
     }
     setSequence(newSeq);
 
-    const pace = Math.max(300, 650 - (curLvl - 1) * 3.5);
+    const pace = Math.max(280, 620 - (curLvl - 1) * 3.2);
 
     // Play sequence with audio-visual pulses
     newSeq.forEach((blockId, idx) => {
       const t1 = window.setTimeout(() => {
         setActiveHighlight(blockId);
-        sound.playNote(FREQUENCIES[blockId], 0.22);
+        sound.playNote(getNoteFrequency(blockId), 0.22);
         const t2 = window.setTimeout(() => {
           setActiveHighlight(null);
           if (idx === newSeq.length - 1) {
@@ -81,13 +115,13 @@ export const CorsiBlocksGame: React.FC<{ onComplete?: (score: number) => void }>
   }, [clearAllTimeouts]);
 
   useEffect(() => {
-    generateAndPlaySequence(level, spanLength);
-  }, [level, spanLength, generateAndPlaySequence]);
+    generateAndPlaySequence(level, spanLength, totalBlocks);
+  }, [level, spanLength, totalBlocks, generateAndPlaySequence]);
 
   const handleBlockClick = (blockId: number) => {
     if (isShowingSequence || gameOver || victory) return;
 
-    sound.playNote(FREQUENCIES[blockId], 0.15);
+    sound.playNote(getNoteFrequency(blockId), 0.15);
     setActiveHighlight(blockId);
     const t = window.setTimeout(() => setActiveHighlight(null), 200);
     timeoutsRef.current.push(t);
@@ -102,7 +136,7 @@ export const CorsiBlocksGame: React.FC<{ onComplete?: (score: number) => void }>
         sound.playSuccess();
         setStatusMessage('SEQUENCE SYNCHRONIZED');
         setVictory(true);
-        const score = 100 * level + spanLength * 25;
+        const score = 100 * level + spanLength * 25 + totalBlocks * 10;
         recordGameWin('corsi', score, 'CORSI BLOCKS', level);
         onComplete?.(score);
       }
@@ -130,7 +164,7 @@ export const CorsiBlocksGame: React.FC<{ onComplete?: (score: number) => void }>
 
   const restartCurrentLevel = () => {
     sound.playClick();
-    generateAndPlaySequence(level, spanLength);
+    generateAndPlaySequence(level, spanLength, totalBlocks);
   };
 
   return (
@@ -174,22 +208,38 @@ export const CorsiBlocksGame: React.FC<{ onComplete?: (score: number) => void }>
           <Activity className="w-3.5 h-3.5 text-cyan-400" />
           <span className="text-white font-bold">{statusMessage}</span>
         </div>
-        <span className="text-cyan-400 font-bold">
-          {playerInput.length}/{spanLength} STEPS
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="px-1.5 py-0.5 rounded-[2px] bg-cyan-500/10 text-cyan-400 text-[10px] border border-cyan-500/20">
+            {gridDimension}×{gridDimension} ({totalBlocks} BLOCKS)
+          </span>
+          <span className="text-cyan-400 font-bold">
+            {playerInput.length}/{spanLength} STEPS
+          </span>
+        </div>
       </div>
 
       {/* Spatial Board */}
       <div className="relative w-full aspect-square max-w-[340px] bg-[#070707] border border-cyan-500/30 rounded-[2px] overflow-hidden shadow-[0_0_30px_rgba(6,182,212,0.12)]">
         {/* Spatial background grid lines */}
-        <div className="absolute inset-0 grid grid-cols-6 grid-rows-6 pointer-events-none opacity-10">
-          {Array.from({ length: 36 }).map((_, i) => (
+        <div 
+          className="absolute inset-0 grid pointer-events-none opacity-10"
+          style={{
+            gridTemplateColumns: `repeat(${gridDimension * 2}, minmax(0, 1fr))`,
+            gridTemplateRows: `repeat(${gridDimension * 2}, minmax(0, 1fr))`,
+          }}
+        >
+          {Array.from({ length: (gridDimension * 2) * (gridDimension * 2) }).map((_, i) => (
             <div key={i} className="border border-cyan-400/20" />
           ))}
         </div>
 
-        {BLOCKS.map(block => {
+        {blocks.map(block => {
           const isHighlighted = activeHighlight === block.id;
+          const sizeClasses = gridDimension === 3 
+            ? 'w-12 h-12 text-xs' 
+            : gridDimension === 4 
+            ? 'w-10 h-10 text-[11px]' 
+            : 'w-8 h-8 text-[10px]';
 
           return (
             <button
@@ -201,7 +251,7 @@ export const CorsiBlocksGame: React.FC<{ onComplete?: (score: number) => void }>
                 top: `${block.y}%`,
                 transform: 'translate(-50%, -50%)',
               }}
-              className={`absolute w-12 h-12 rounded-[2px] flex items-center justify-center font-mono text-xs transition-all duration-100 ${
+              className={`absolute ${sizeClasses} rounded-[2px] flex items-center justify-center font-mono transition-all duration-100 ${
                 isHighlighted
                   ? 'bg-cyan-400 border-cyan-300 text-black scale-110 shadow-[0_0_25px_rgba(34,211,238,0.9)] z-10 font-bold'
                   : 'bg-[#121212] border border-white/20 text-white/40 hover:border-cyan-400/50 hover:bg-[#1a1a1a] active:scale-95'

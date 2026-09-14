@@ -3,34 +3,60 @@ import { sound } from '../services/audio';
 import { recordGameWin, getGameLevel, setGameLevel } from '../services/storage';
 import { RotateCcw, Brain, Award, AlertCircle, Layers, Trophy, CheckCircle } from 'lucide-react';
 
-const GRID_ROWS = 6;
-const GRID_COLS = 5;
-const TOTAL_CELLS = GRID_ROWS * GRID_COLS;
+// Dynamic grid dimension based on level progression:
+// Levels 1-20: 3x3 (9 cells)
+// Levels 21-50: 4x4 (16 cells)
+// Levels 51-80: 5x5 (25 cells)
+// Levels 81-100: 6x6 (36 cells)
+const getChimpGrid = (level: number) => {
+  if (level <= 20) {
+    return { dim: 3, label: '3×3 (9 BLOCKS)' };
+  }
+  if (level <= 50) {
+    return { dim: 4, label: '4×4 (16 BLOCKS)' };
+  }
+  if (level <= 80) {
+    return { dim: 5, label: '5×5 (25 BLOCKS)' };
+  }
+  return { dim: 6, label: '6×6 (36 BLOCKS)' };
+};
 
 export const ChimpTestGame: React.FC<{ onComplete?: (score: number) => void }> = ({ onComplete }) => {
   const [level, setLevel] = useState<number>(() => getGameLevel('chimp'));
   const [showLevelPicker, setShowLevelPicker] = useState<boolean>(false);
 
-  // Tiles count scales from 4 (Level 1) to 22 (Level 100)
+  const gridConfig = useMemo(() => getChimpGrid(level), [level]);
+  const totalCells = gridConfig.dim * gridConfig.dim;
+
+  // Number of targets scales with both level and grid capacity
   const tileCountForLevel = useMemo(() => {
-    return Math.min(22, 4 + Math.floor((level - 1) * 0.18));
+    if (level <= 20) {
+      return Math.min(6, 3 + Math.floor((level - 1) * 0.16));
+    }
+    if (level <= 50) {
+      return Math.min(10, 5 + Math.floor((level - 21) * 0.17));
+    }
+    if (level <= 80) {
+      return Math.min(16, 8 + Math.floor((level - 51) * 0.28));
+    }
+    return Math.min(22, 14 + Math.floor((level - 81) * 0.42));
   }, [level]);
 
-  const [tiles, setTiles] = useState<(number | null)[]>(Array(TOTAL_CELLS).fill(null));
+  const [tiles, setTiles] = useState<(number | null)[]>(() => Array(totalCells).fill(null));
   const [nextExpected, setNextExpected] = useState<number>(1);
   const [isMasked, setIsMasked] = useState<boolean>(false);
   const [strikes, setStrikes] = useState<number>(0);
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [victory, setVictory] = useState<boolean>(false);
 
-  const startRound = useCallback((targetCount: number) => {
+  const startRound = useCallback((targetCount: number, cellsCount: number) => {
     const indices: number[] = [];
     while (indices.length < targetCount) {
-      const idx = Math.floor(Math.random() * TOTAL_CELLS);
+      const idx = Math.floor(Math.random() * cellsCount);
       if (!indices.includes(idx)) indices.push(idx);
     }
 
-    const newTiles = Array(TOTAL_CELLS).fill(null);
+    const newTiles = Array(cellsCount).fill(null);
     indices.forEach((cellIdx, numIdx) => {
       newTiles[cellIdx] = numIdx + 1;
     });
@@ -43,8 +69,8 @@ export const ChimpTestGame: React.FC<{ onComplete?: (score: number) => void }> =
   }, []);
 
   useEffect(() => {
-    startRound(tileCountForLevel);
-  }, [tileCountForLevel, startRound]);
+    startRound(tileCountForLevel, totalCells);
+  }, [level, tileCountForLevel, totalCells, startRound]);
 
   const handleCellClick = (val: number | null, index: number) => {
     if (val === null || gameOver || victory) return;
@@ -65,7 +91,7 @@ export const ChimpTestGame: React.FC<{ onComplete?: (score: number) => void }> =
         // Completed this level!
         sound.playSuccess();
         setVictory(true);
-        const score = 100 * level + tileCountForLevel * 20;
+        const score = 100 * level + tileCountForLevel * 20 + totalCells * 5;
         recordGameWin('chimp', score, 'CHIMP TEST', level);
         onComplete?.(score);
       } else {
@@ -82,7 +108,7 @@ export const ChimpTestGame: React.FC<{ onComplete?: (score: number) => void }> =
         sound.playError();
         // Re-show tiles and restart level
         setIsMasked(false);
-        setTimeout(() => startRound(tileCountForLevel), 900);
+        setTimeout(() => startRound(tileCountForLevel, totalCells), 900);
       }
     }
   };
@@ -93,6 +119,8 @@ export const ChimpTestGame: React.FC<{ onComplete?: (score: number) => void }> =
     setLevel(nextLvl);
     setGameLevel('chimp', nextLvl);
     setStrikes(0);
+    setVictory(false);
+    setGameOver(false);
   };
 
   const selectLevel = (targetLvl: number) => {
@@ -101,12 +129,16 @@ export const ChimpTestGame: React.FC<{ onComplete?: (score: number) => void }> =
     setGameLevel('chimp', targetLvl);
     setShowLevelPicker(false);
     setStrikes(0);
+    setVictory(false);
+    setGameOver(false);
   };
 
   const restartCurrentLevel = () => {
     sound.playClick();
     setStrikes(0);
-    startRound(tileCountForLevel);
+    setVictory(false);
+    setGameOver(false);
+    startRound(tileCountForLevel, totalCells);
   };
 
   return (
@@ -146,8 +178,11 @@ export const ChimpTestGame: React.FC<{ onComplete?: (score: number) => void }> =
 
       {/* Strikes indicator */}
       <div className="flex items-center justify-between w-full mb-3 text-xs font-mono text-white/50">
-        <span className="flex items-center gap-1">
-          MEMORY LOAD: <span className="text-cyan-400 font-bold">{Math.round((tileCountForLevel / 30) * 100)}% OCCUPANCY</span>
+        <span className="flex items-center gap-2">
+          <span className="px-1.5 py-0.5 rounded-[2px] bg-cyan-500/10 text-cyan-400 text-[10px] border border-cyan-500/20">
+            {gridConfig.label}
+          </span>
+          <span className="text-white font-bold">{tileCountForLevel} TARGETS</span>
         </span>
         <div className="flex items-center gap-1.5">
           <span className="text-white/40">STRIKES:</span>
@@ -163,17 +198,31 @@ export const ChimpTestGame: React.FC<{ onComplete?: (score: number) => void }> =
       </div>
 
       {/* Grid Canvas */}
-      <div className="relative grid grid-cols-5 grid-rows-6 gap-1.5 p-2 bg-[#070707] border border-cyan-500/30 rounded-[2px] w-full aspect-[5/6] max-w-[340px] shadow-[0_0_30px_rgba(6,182,212,0.12)]">
+      <div 
+        className="relative grid gap-1.5 p-2 bg-[#070707] border border-cyan-500/30 rounded-[2px] w-full aspect-square max-w-[340px] shadow-[0_0_30px_rgba(6,182,212,0.12)]"
+        style={{
+          gridTemplateColumns: `repeat(${gridConfig.dim}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${gridConfig.dim}, minmax(0, 1fr))`,
+        }}
+      >
         {tiles.map((val, idx) => {
           if (val === null) {
             return <div key={idx} className="w-full h-full bg-transparent rounded-[2px]" />;
           }
 
+          const fontClass = gridConfig.dim === 3
+            ? 'text-2xl sm:text-3xl'
+            : gridConfig.dim === 4
+            ? 'text-xl sm:text-2xl'
+            : gridConfig.dim === 5
+            ? 'text-base sm:text-lg'
+            : 'text-xs sm:text-sm';
+
           return (
             <button
               key={idx}
               onClick={() => handleCellClick(val, idx)}
-              className={`w-full h-full flex items-center justify-center font-display font-bold text-lg rounded-[2px] transition-all border ${
+              className={`w-full h-full flex items-center justify-center font-display font-bold ${fontClass} rounded-[2px] transition-all border ${
                 isMasked
                   ? 'bg-[#181818] border-cyan-500/40 hover:bg-cyan-500/20 text-transparent shadow-md'
                   : 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]'

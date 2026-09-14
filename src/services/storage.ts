@@ -148,6 +148,11 @@ export function recordGameWin(gameId: string, score: number, gameTitle?: string,
   // Play streak sound if streak expanded, otherwise play victory win sound!
   if (streakIncreased && stats.streak > prevStreak) {
     sound.playStreak();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('arcadex_streak_unlocked', {
+        detail: { streak: stats.streak, prevStreak }
+      }));
+    }
   } else {
     sound.playWin();
   }

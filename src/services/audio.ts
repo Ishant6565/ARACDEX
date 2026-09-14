@@ -313,9 +313,32 @@ class SoundEngine {
   private streakAudio: HTMLAudioElement | null = null;
   private defeatAudio: HTMLAudioElement | null = null;
   public isBgmPlaying: boolean = false;
+  public bgmEnabled: boolean = true;
+
+  public autoStartBgmIfEnabled(): void {
+    if (typeof window === 'undefined') return;
+    const savedPref = localStorage.getItem('arcadex_bgm_enabled');
+    this.bgmEnabled = savedPref !== null ? savedPref === 'true' : true;
+    if (!this.bgmEnabled) return;
+
+    this.playBGM();
+
+    const startOnInteract = () => {
+      if (this.bgmEnabled && !this.isBgmPlaying) {
+        this.playBGM();
+      }
+      ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(evt => {
+        window.removeEventListener(evt, startOnInteract);
+      });
+    };
+
+    ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(evt => {
+      window.addEventListener(evt, startOnInteract, { passive: true, once: true });
+    });
+  }
 
   public playBGM(): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !this.bgmEnabled) return;
     try {
       if (!this.bgmAudio) {
         this.bgmAudio = new Audio('/audio/bgm.mp3');
@@ -328,12 +351,17 @@ class SoundEngine {
         this.isBgmPlaying = true;
       }).catch(() => {
         const startOnFirstInteract = () => {
+          if (!this.bgmEnabled) return;
           this.bgmAudio?.play().then(() => {
             this.isBgmPlaying = true;
           }).catch(() => {});
-          window.removeEventListener('click', startOnFirstInteract);
+          ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(evt => {
+            window.removeEventListener(evt, startOnFirstInteract);
+          });
         };
-        window.addEventListener('click', startOnFirstInteract, { once: true });
+        ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(evt => {
+          window.addEventListener(evt, startOnFirstInteract, { passive: true, once: true });
+        });
       });
     } catch {}
   }
@@ -347,9 +375,13 @@ class SoundEngine {
 
   public toggleBGM(): boolean {
     if (this.isBgmPlaying) {
+      this.bgmEnabled = false;
+      localStorage.setItem('arcadex_bgm_enabled', 'false');
       this.stopBGM();
       return false;
     } else {
+      this.bgmEnabled = true;
+      localStorage.setItem('arcadex_bgm_enabled', 'true');
       this.playBGM();
       return true;
     }

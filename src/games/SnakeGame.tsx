@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { sound } from '../services/audio';
+import { haptics } from '../services/haptics';
 import { recordGameWin, getGameLevel, setGameLevel } from '../services/storage';
 import { RotateCcw, Play, Pause, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Layers, Trophy, CheckCircle } from 'lucide-react';
 
@@ -197,16 +198,79 @@ export const SnakeGame: React.FC<{ onComplete?: (score: number) => void }> = ({ 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const changeDirection = (newDir: Direction) => {
-    sound.playClick();
-    if (newDir === 'UP' && dirRef.current !== 'DOWN') setDirection('UP');
-    if (newDir === 'DOWN' && dirRef.current !== 'UP') setDirection('DOWN');
-    if (newDir === 'LEFT' && dirRef.current !== 'RIGHT') setDirection('LEFT');
-    if (newDir === 'RIGHT' && dirRef.current !== 'LEFT') setDirection('RIGHT');
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const changeDirection = useCallback((newDir: Direction) => {
+    const current = dirRef.current;
+    if (newDir === 'UP' && current !== 'DOWN') {
+      sound.playMove();
+      haptics.light();
+      setDirection('UP');
+    } else if (newDir === 'DOWN' && current !== 'UP') {
+      sound.playMove();
+      haptics.light();
+      setDirection('DOWN');
+    } else if (newDir === 'LEFT' && current !== 'RIGHT') {
+      sound.playMove();
+      haptics.light();
+      setDirection('LEFT');
+    } else if (newDir === 'RIGHT' && current !== 'LEFT') {
+      sound.playMove();
+      haptics.light();
+      setDirection('RIGHT');
+    }
+  }, []);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    // Prevent default browser scrolling when touching the game canvas
+    if (e.cancelable) {
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - touchStartRef.current.x;
+    const dy = touch.clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+    const minSwipe = 15; // responsive 15px threshold
+
+    if (absX < minSwipe && absY < minSwipe) return;
+
+    if (absX > absY) {
+      // Horizontal swipe (Left / Right)
+      if (dx > 0) {
+        changeDirection('RIGHT');
+      } else {
+        changeDirection('LEFT');
+      }
+    } else {
+      // Vertical swipe (Up / Down)
+      if (dy > 0) {
+        changeDirection('DOWN');
+      } else {
+        changeDirection('UP');
+      }
+    }
   };
 
   return (
-    <div className="flex flex-col items-center w-full max-w-md mx-auto select-none">
+    <div 
+      className="flex flex-col items-center w-full max-w-md mx-auto select-none"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={{ touchAction: 'none' }}
+    >
       {/* Header */}
       <div className="flex items-center justify-between w-full mb-3 pb-3 border-b border-white/[0.08]">
         <div>
@@ -384,6 +448,10 @@ export const SnakeGame: React.FC<{ onComplete?: (score: number) => void }> = ({ 
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
+
+      <span className="text-[10px] font-mono text-cyan-400/80 mt-2 text-center sm:hidden">
+        TIP: SWIPE SCREEN TO TURN // TAP D-PAD
+      </span>
 
       {/* 100 Levels Picker Modal */}
       {showLevelPicker && (

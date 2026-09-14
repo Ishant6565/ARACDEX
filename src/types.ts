@@ -41,7 +41,7 @@ export interface UserProfile {
   username: string;
   email: string;
   avatar: string;
-  provider: 'google' | 'custom' | 'guest';
+  provider: 'google' | 'github' | 'custom' | 'guest';
   createdAt: string;
   stats: UserStats;
   recentActivity: ActivityRecord[];

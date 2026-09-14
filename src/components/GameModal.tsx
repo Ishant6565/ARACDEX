@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { GameInfo } from '../types';
-import { X, Terminal, Share2 } from 'lucide-react';
+import { X, Terminal, Share2, ChevronLeft } from 'lucide-react';
 import { sound } from '../services/audio';
 import { haptics } from '../services/haptics';
 import { shareAchievement } from '../services/share';
@@ -99,69 +99,87 @@ export const GameModal: React.FC<GameModalProps> = ({ game, onClose, onGameCompl
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/85 backdrop-blur-md animate-fade-in select-none p-2 sm:p-4 md:p-6">
-      <div className="min-h-full flex items-center justify-center py-2 sm:py-4">
-        {/* Modal Container */}
-        <div className="relative w-full max-w-2xl bg-[#080808] border border-cyan-500/30 rounded-[3px] shadow-[0_25px_70px_rgba(0,0,0,0.95),0_0_30px_rgba(6,182,212,0.15)] flex flex-col max-h-[92vh] sm:max-h-[96vh] overflow-hidden my-auto">
-          {/* Top Control Bar */}
-          <div className="flex items-center justify-between px-4 py-3 bg-[#0a0a0a] border-b border-white/[0.08] shrink-0">
-          <div className="flex items-center gap-3">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
-            <span className="font-mono text-xs text-cyan-400 tracking-wider">
+    <div className="fixed inset-0 z-[100] w-full h-[100dvh] bg-[#050505] flex flex-col overflow-hidden select-none animate-arena-enter">
+      {/* Ambient background light leaks */}
+      <div className="absolute top-0 left-1/4 w-96 h-48 bg-cyan-500/10 blur-[100px] pointer-events-none rounded-full" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-48 bg-blue-500/10 blur-[100px] pointer-events-none rounded-full" />
+
+      {/* Top Arena Navigation Bar */}
+      <header className="h-14 sm:h-16 px-3 sm:px-6 bg-[#08080a]/95 backdrop-blur-md border-b border-white/[0.08] flex items-center justify-between shrink-0 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.8)]">
+        <div className="flex items-center gap-3">
+          {/* Back to Lobby Button */}
+          <button
+            onClick={() => {
+              sound.playClick();
+              onClose();
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#121215] hover:bg-[#1a1a20] border border-white/[0.1] hover:border-cyan-400/60 rounded-[3px] text-xs font-mono text-zinc-300 hover:text-white transition-all active:scale-95 group"
+            title="Exit Protocol to Lobby"
+          >
+            <ChevronLeft className="w-4 h-4 text-cyan-400 group-hover:-translate-x-0.5 transition-transform" />
+            <span className="font-bold tracking-wider">LOBBY</span>
+          </button>
+
+          <div className="h-4 w-[1px] bg-white/10 hidden sm:block" />
+
+          {/* Game Title & Protocol Indicator */}
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.9)]" />
+            <span className="font-mono text-xs text-cyan-400 font-bold tracking-wider hidden sm:inline">
               PROTOCOL // {game.number}
             </span>
-            <span className="font-display font-bold text-sm text-white">
+            <span className="font-display font-bold text-sm sm:text-base text-white tracking-tight">
               {game.title}
             </span>
           </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                sound.playClick();
-                haptics.medium();
-                shareAchievement({
-                  gameTitle: game.title,
-                  customNote: `Playing ${game.title} on ARCADEX! Can you beat my highscore?`,
-                });
-              }}
-              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono font-bold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-400/40 hover:border-emerald-300 rounded-[2px] transition-all active:scale-95 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
-              title="Share Protocol on WhatsApp"
-            >
-              <Share2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="hidden sm:inline text-[10px] tracking-wider">SHARE</span>
-            </button>
-
-            <button
-              onClick={() => {
-                sound.playClick();
-                onClose();
-              }}
-              className="p-1.5 text-white/60 hover:text-white bg-[#141414] hover:bg-[#222] border border-white/[0.08] hover:border-cyan-400/40 rounded-[2px] transition-colors"
-              title="Close Protocol (Esc)"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
         </div>
 
-        {/* Scrollable Game Canvas & Stage */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 flex flex-col items-center justify-center scrollbar-thin">
-          {renderGame()}
-        </div>
+        <div className="flex items-center gap-2">
+          {/* WhatsApp Share Button */}
+          <button
+            onClick={() => {
+              sound.playClick();
+              haptics.medium();
+              shareAchievement({
+                gameTitle: game.title,
+                customNote: `Playing ${game.title} on ARCADEX! Can you beat my highscore?`,
+              });
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-400/40 hover:border-emerald-300 rounded-[3px] transition-all active:scale-95 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
+            title="Share Protocol on WhatsApp"
+          >
+            <Share2 className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden sm:inline text-[11px] tracking-wider">SHARE</span>
+          </button>
 
-        {/* Instructions Drawer Footer */}
-        <div className="px-4 py-2.5 bg-[#050505] border-t border-white/[0.06] flex items-center justify-between font-mono text-[10px] text-white/40">
-          <span className="flex items-center gap-1.5 truncate">
-            <Terminal className="w-3 h-3 text-cyan-400 shrink-0" />
-            CONTROLS: {game.controls}
-          </span>
-          <span className="shrink-0 text-cyan-400/60">PRESS ESC TO RETURN</span>
+          {/* Close X */}
+          <button
+            onClick={() => {
+              sound.playClick();
+              onClose();
+            }}
+            className="p-2 text-white/60 hover:text-white bg-[#141414] hover:bg-[#202020] border border-white/[0.08] hover:border-cyan-400/50 rounded-[3px] transition-colors"
+            title="Close Protocol"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
-      </div>
-    </div>
-  </div>,
-  document.body
+      </header>
+
+      {/* Main Game Stage Arena (fills the screen with smooth scrolling) */}
+      <main className="flex-1 w-full overflow-y-auto flex flex-col items-center justify-center p-3 sm:p-6 relative z-10 scrollbar-thin">
+        {renderGame()}
+      </main>
+
+      {/* Bottom Controls Bar */}
+      <footer className="px-4 py-2 bg-[#08080a] border-t border-white/[0.06] flex items-center justify-between font-mono text-[10px] text-white/40 shrink-0 z-20">
+        <span className="flex items-center gap-1.5 truncate">
+          <Terminal className="w-3 h-3 text-cyan-400 shrink-0" />
+          CONTROLS: {game.controls}
+        </span>
+      </footer>
+    </div>,
+    document.body
   );
 };
 
