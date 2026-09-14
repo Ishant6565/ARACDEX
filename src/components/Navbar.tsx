@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Flame, Zap, Sliders, Gamepad2, Trophy } from 'lucide-react';
+import { Flame, Zap, Sliders, Gamepad2, Trophy, LogOut } from 'lucide-react';
 import { sound } from '../services/audio';
 import { haptics } from '../services/haptics';
 import { UserStats, UserProfile } from '../types';
@@ -13,6 +13,7 @@ interface NavbarProps {
   onOpenRandom: () => void;
   onOpenAuth: () => void;
   onOpenStats: (tab?: 'tiers' | 'graphs' | 'streak' | 'vault' | 'leaderboard') => void;
+  onLogout?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -23,6 +24,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenRandom,
   onOpenAuth,
   onOpenStats,
+  onLogout,
 }) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   return (
@@ -115,17 +117,33 @@ export const Navbar: React.FC<NavbarProps> = ({
               haptics.light();
               setIsSettingsOpen(true);
             }}
-            className="p-1.5 sm:p-2 bg-[#101010] hover:bg-[#181818] border border-white/[0.15] hover:border-cyan-400/60 rounded-[2px] text-white/60 hover:text-cyan-400 transition-all shrink-0"
+            className="p-1.5 sm:p-2 bg-[#101010] hover:bg-[#181818] border border-white/[0.15] hover:border-cyan-400/60 rounded-[2px] text-white/60 hover:text-cyan-400 transition-all shrink-0 cursor-pointer"
             title="System Audio & Engine Settings"
           >
             <Sliders className="w-3.5 h-3.5" />
           </button>
+
+          {/* Prominent Direct Logout Button */}
+          {onLogout && (
+            <button
+              onClick={() => {
+                sound.playClick();
+                haptics.medium();
+                onLogout();
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 hover:border-rose-400/70 rounded-[2px] font-mono text-[10px] sm:text-xs text-rose-400 hover:text-rose-300 transition-all active:scale-95 shadow-[0_0_12px_rgba(244,63,94,0.15)] shrink-0 cursor-pointer group"
+              title="Log Out & Switch Operator ID"
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-400 group-hover:-translate-x-0.5 transition-transform" />
+              <span className="font-bold">LOGOUT</span>
+            </button>
+          )}
         </div>
       </div>
     </header>
 
     {/* System Settings Modal */}
-    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} onLogout={onLogout} />
     </>
   );
 };

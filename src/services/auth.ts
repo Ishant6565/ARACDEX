@@ -121,6 +121,17 @@ export function hasActiveRealUser(): boolean {
   return Boolean(current && current.id !== 'guest_primary' && current.email && current.email.includes('@'));
 }
 
+export function logoutUser(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(ACCOUNTS_KEY);
+    localStorage.removeItem(CURRENT_USER_KEY);
+    localStorage.removeItem('arcadex_stats');
+  } catch (err) {
+    console.error('Logout error:', err);
+  }
+}
+
 /**
  * Real Gmail Sign In: registers / switches to user's verified Gmail account
  */

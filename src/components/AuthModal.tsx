@@ -16,6 +16,7 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUserChange: (user: UserProfile) => void;
+  onLogout?: () => void;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -23,6 +24,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
   onUserChange,
+  onLogout,
 }) => {
   const [activeTab, setActiveTab] = useState<'gmail' | 'roster'>('gmail');
   const [gmailInput, setGmailInput] = useState('');
@@ -196,11 +198,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         type="button"
                         onClick={() => {
                           sound.playClick();
-                          localStorage.removeItem('arcadex_accounts');
-                          localStorage.removeItem('arcadex_current_user');
-                          window.location.reload();
+                          if (onLogout) {
+                            onLogout();
+                          } else {
+                            localStorage.removeItem('arcadex_accounts');
+                            localStorage.removeItem('arcadex_current_user');
+                            window.location.reload();
+                          }
                         }}
-                        className="text-[10px] font-mono text-rose-400 hover:text-rose-300 flex items-center gap-1 uppercase transition-colors"
+                        className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 hover:border-rose-400/60 rounded text-[10px] font-mono text-rose-400 hover:text-rose-300 flex items-center gap-1.5 uppercase transition-all cursor-pointer shadow-sm active:scale-95"
                       >
                         <LogOut className="w-3 h-3" /> LOGOUT & RESET ID
                       </button>
@@ -422,7 +428,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   })}
                 </div>
 
-                <div className="pt-2 border-t border-white/[0.08]">
+                <div className="pt-2 border-t border-white/[0.08] flex flex-col sm:flex-row gap-2">
                   <button
                     onClick={() => {
                       sound.playClick();
@@ -430,10 +436,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       setCallsignInput('');
                       setActiveTab('gmail');
                     }}
-                    className="w-full py-2.5 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-mono text-xs uppercase tracking-wider rounded-[2px] transition-all"
+                    className="flex-1 py-2.5 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-mono text-xs uppercase tracking-wider rounded-[2px] transition-all cursor-pointer"
                   >
-                    + ADD ANOTHER FRIEND GMAIL
+                    + ADD FRIEND GMAIL
                   </button>
+                  {onLogout && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sound.playClick();
+                        onLogout();
+                      }}
+                      className="py-2.5 px-3 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 hover:border-rose-400/60 text-rose-400 hover:text-rose-300 font-mono text-xs uppercase tracking-wider rounded-[2px] transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      LOGOUT
+                    </button>
+                  )}
                 </div>
               </div>
             )}

@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Volume2, VolumeX, Music, Smartphone, Sparkles, Sliders, RotateCcw, Check } from 'lucide-react';
+import { X, Volume2, VolumeX, Music, Smartphone, Sparkles, Sliders, RotateCcw, Check, LogOut } from 'lucide-react';
 import { sound } from '../services/audio';
 import { haptics } from '../services/haptics';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onLogout?: () => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onLogout }) => {
   const [bgmVol, setBgmVol] = useState<number>(() => Math.round(sound.getBgmVolume() * 100));
   const [sfxVol, setSfxVol] = useState<number>(() => Math.round(sound.getSfxVolume() * 100));
   const [sfxEnabled, setSfxEnabled] = useState<boolean>(() => sound.enabled);
@@ -189,6 +190,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </button>
             </div>
           </div>
+
+          {/* Operator Session / Logout */}
+          {onLogout && (
+            <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-white font-display tracking-tight block">OPERATOR IDENTITY</span>
+                <span className="text-[10px] font-mono text-zinc-400">Sign out of active account on this device</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  onClose();
+                  onLogout();
+                }}
+                className="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-rose-300 hover:text-rose-200 rounded text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-sm"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                LOGOUT
+              </button>
+            </div>
+          )}
 
           {/* System Telemetry & Performance Info */}
           <div className="p-3 bg-[#0e0e12] border border-cyan-500/20 rounded-xl text-xs space-y-1 font-mono text-white/70">

@@ -12,7 +12,7 @@ import { LoadingSplash } from './components/LoadingSplash';
 import { GatekeeperLogin } from './components/GatekeeperLogin';
 import { GameInfo, UserStats, UserProfile } from './types';
 import { loadUserStats, recordGameWin } from './services/storage';
-import { getCurrentUser, hasActiveRealUser, loginWithRealGmail, loginWithOAuthProvider } from './services/auth';
+import { getCurrentUser, hasActiveRealUser, loginWithRealGmail, loginWithOAuthProvider, logoutUser } from './services/auth';
 import { sound } from './services/audio';
 import { supabase, syncLocalWithCloud } from './services/supabase';
 
@@ -131,6 +131,23 @@ export function App() {
     }
   };
 
+  const handleLogout = async () => {
+    sound.playClick();
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn('Supabase signOut notice:', err);
+    }
+    logoutUser();
+    setIsAuthModalOpen(false);
+    setIsStatsModalOpen(false);
+    setActiveGame(null);
+    setHasRealAccount(false);
+    const guest = getCurrentUser();
+    setCurrentUser(guest);
+    setStats(guest.stats);
+  };
+
   return (
     <>
       {isLoadingSplash && (
@@ -167,6 +184,7 @@ export function App() {
             onOpenRandom={handleOpenRandom}
             onOpenAuth={() => setIsAuthModalOpen(true)}
             onOpenStats={handleOpenStats}
+            onLogout={handleLogout}
           />
 
           {/* Main Content Sections */}
@@ -210,6 +228,7 @@ export function App() {
             isOpen={isAuthModalOpen}
             onClose={() => setIsAuthModalOpen(false)}
             onUserChange={handleUserChange}
+            onLogout={handleLogout}
           />
 
           {/* Streak Milestone Celebration Modal */}

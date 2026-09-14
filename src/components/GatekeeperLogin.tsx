@@ -60,32 +60,33 @@ export const GatekeeperLogin: React.FC<GatekeeperLoginProps> = ({ onLoginSuccess
   };
 
   return (
-    <div className="fixed inset-0 z-[150] bg-[#050508] overflow-y-auto flex flex-col justify-center items-center p-4 sm:p-6 select-none animate-fade-in">
+    <div className="fixed inset-0 z-[150] bg-[#050508] overflow-y-auto select-none animate-fade-in">
       {/* Ambient Lighting */}
       <div className="fixed top-1/4 left-1/3 -translate-x-1/2 w-96 h-96 bg-cyan-500/10 blur-[130px] rounded-full pointer-events-none" />
       <div className="fixed bottom-1/4 right-1/3 w-96 h-96 bg-blue-600/10 blur-[130px] rounded-full pointer-events-none" />
 
-      <div className="relative z-10 w-full max-w-md my-auto flex flex-col items-center text-center">
-        {/* Glowing Logo & Title */}
-        <div className="relative mb-4">
-          <div className="w-14 h-14 rounded-[4px] bg-gradient-to-tr from-cyan-400 to-blue-500 text-black flex items-center justify-center font-display font-black text-2xl shadow-[0_0_35px_rgba(6,182,212,0.7)]">
-            A
+      <div className="min-h-full w-full flex flex-col items-center justify-start sm:justify-center p-4 py-8 sm:py-10">
+        <div className="relative z-10 w-full max-w-md my-auto flex flex-col items-center text-center">
+          {/* Glowing Logo & Title */}
+          <div className="relative mb-3">
+            <div className="w-13 h-13 rounded-[4px] bg-gradient-to-tr from-cyan-400 to-blue-500 text-black flex items-center justify-center font-display font-black text-2xl shadow-[0_0_35px_rgba(6,182,212,0.7)]">
+              A
+            </div>
+            <div className="absolute -inset-1.5 rounded-[6px] border border-cyan-400/40 animate-ping pointer-events-none" />
           </div>
-          <div className="absolute -inset-1.5 rounded-[6px] border border-cyan-400/40 animate-ping pointer-events-none" />
-        </div>
 
-        <span className="font-mono text-[10px] text-cyan-400 tracking-[0.3em] uppercase block font-bold mb-1">
-          // OPERATOR ONBOARDING PROTOCOL
-        </span>
-        <h1 className="font-display font-black text-2xl sm:text-3xl text-white tracking-tight mb-2">
-          INITIALIZE OPERATOR ID
-        </h1>
-        <p className="font-sans text-xs text-zinc-400 mb-6 leading-relaxed max-w-sm">
-          Ek baar apna real ID set karein — aapke saare 100-level checkpoints, daily streaks aur scores is device par permanently save rahenge.
-        </p>
+          <span className="font-mono text-[10px] text-cyan-400 tracking-[0.3em] uppercase block font-bold mb-1">
+            // OPERATOR ONBOARDING PROTOCOL
+          </span>
+          <h1 className="font-display font-black text-2xl sm:text-3xl text-white tracking-tight mb-1.5">
+            INITIALIZE OPERATOR ID
+          </h1>
+          <p className="font-sans text-xs text-zinc-400 mb-4 leading-relaxed max-w-sm">
+            Ek baar apna real ID set karein — aapke saare 100-level checkpoints, daily streaks aur scores is device par permanently save rahenge.
+          </p>
 
-        {/* OAuth Buttons (Google & GitHub) */}
-        <div className="w-full space-y-2.5 mb-5">
+          {/* OAuth Buttons (Google & GitHub) */}
+          <div className="w-full space-y-2 mb-4">
           {/* Google Sign-in Button */}
           <button
             type="button"
@@ -199,7 +200,7 @@ export const GatekeeperLogin: React.FC<GatekeeperLoginProps> = ({ onLoginSuccess
             <label className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
               CHOOSE TITAN AVATAR (22 ICONS)
             </label>
-            <div className="grid grid-cols-6 gap-2 max-h-32 overflow-y-auto p-1.5 bg-black/60 border border-white/[0.1] rounded-[2px] scrollbar-thin">
+            <div className="grid grid-cols-6 gap-1.5 max-h-28 overflow-y-auto p-1.5 bg-black/60 border border-white/[0.1] rounded-[2px] scrollbar-thin">
               {AVAILABLE_AVATARS.map(av => (
                 <button
                   type="button"
@@ -225,18 +226,19 @@ export const GatekeeperLogin: React.FC<GatekeeperLoginProps> = ({ onLoginSuccess
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3.5 bg-cyan-400 hover:bg-cyan-300 text-black font-mono font-bold text-xs uppercase tracking-wider rounded-[2px] transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] active:scale-95 flex items-center justify-center gap-2 cursor-pointer mt-2"
+            className="w-full py-3 bg-cyan-400 hover:bg-cyan-300 text-black font-mono font-bold text-xs uppercase tracking-wider rounded-[2px] transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] active:scale-95 flex items-center justify-center gap-2 cursor-pointer mt-2"
           >
             <UserCheck className="w-4 h-4 text-black" />
             <span>{isSubmitting ? 'INITIALIZING ID...' : 'ENTER ARCADEX SUITE'}</span>
           </button>
         </form>
 
-        <div className="mt-4 flex items-center justify-center gap-1.5 text-[10px] font-mono text-zinc-500">
+        <div className="mt-3 flex items-center justify-center gap-1.5 text-[10px] font-mono text-zinc-500">
           <ShieldCheck className="w-3.5 h-3.5 text-cyan-400/70" />
           <span>SESSION PERSISTS PERMANENTLY IN YOUR BROWSER</span>
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 };
