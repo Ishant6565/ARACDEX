@@ -14,7 +14,7 @@ import { GameInfo, UserStats, UserProfile } from './types';
 import { loadUserStats, recordGameWin } from './services/storage';
 import { getCurrentUser, hasActiveRealUser, loginWithRealGmail, loginWithOAuthProvider, logoutUser } from './services/auth';
 import { sound } from './services/audio';
-import { supabase, syncLocalWithCloud, closeAuthBrowser } from './services/supabase';
+import { supabase, syncLocalWithCloud, closeAuthBrowser, isNativeAPK } from './services/supabase';
 import { App as CapApp } from '@capacitor/app';
 
 export function App() {
@@ -165,6 +165,14 @@ export function App() {
 
   // Listen for Supabase OAuth redirects (Google, GitHub on web)
   useEffect(() => {
+    // If user completed OAuth in mobile browser, auto-bounce back to ARCADEX app
+    if (typeof window !== 'undefined' && !isNativeAPK() && /android/i.test(navigator.userAgent)) {
+      if (window.location.hash.includes('access_token') || window.location.search.includes('code=')) {
+        const target = `com.arcadex.game://auth/callback${window.location.hash || window.location.search}`;
+        window.location.href = target;
+      }
+    }
+
     // Check initial session if returning from Google / GitHub OAuth redirect
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
