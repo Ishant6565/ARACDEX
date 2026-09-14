@@ -141,6 +141,55 @@ export async function signUpWithEmailPassword(
 }
 
 /**
+ * Robustly extract avatar URL from Supabase User across Google, GitHub, and custom providers
+ */
+export function extractUserAvatar(u: any, provider: 'google' | 'github' | string = 'google'): string {
+  if (!u) return provider === 'github' ? '/anime/jinwoo.svg' : '/anime/kakashi.svg';
+
+  const meta = u.user_metadata || {};
+
+  // 1. Direct metadata keys (Google uses 'picture', GitHub uses 'avatar_url')
+  const directUrl =
+    meta.avatar_url ||
+    meta.picture ||
+    meta.avatar ||
+    meta.photoURL ||
+    meta.image;
+
+  if (directUrl && typeof directUrl === 'string' && directUrl.trim().length > 0) {
+    return directUrl.trim();
+  }
+
+  // 2. Identity provider data (Supabase OAuth raw profiles)
+  if (Array.isArray(u.identities) && u.identities.length > 0) {
+    for (const identity of u.identities) {
+      const idData = identity.identity_data || {};
+      const idUrl =
+        idData.avatar_url ||
+        idData.picture ||
+        idData.avatar ||
+        idData.photoURL ||
+        idData.image;
+      if (idUrl && typeof idUrl === 'string' && idUrl.trim().length > 0) {
+        return idUrl.trim();
+      }
+    }
+  }
+
+  // 3. GitHub username fallback (GitHub avatars are predictable and high-res)
+  if (provider === 'github') {
+    const ghUser = meta.user_name || meta.preferred_username;
+    if (ghUser) {
+      return `https://github.com/${ghUser}.png`;
+    }
+    return '/anime/jinwoo.svg';
+  }
+
+  // 4. Default fallback
+  return '/anime/kakashi.svg';
+}
+
+/**
  * Check if user is currently authenticated via genuine Google OAuth
  */
 export async function getActiveGoogleUser(): Promise<{ email: string; name: string; avatar: string } | null> {
@@ -150,7 +199,7 @@ export async function getActiveGoogleUser(): Promise<{ email: string; name: stri
       const u = session.user;
       const email = u.email || '';
       const name = u.user_metadata?.full_name || u.user_metadata?.name || email.split('@')[0];
-      const avatar = u.user_metadata?.avatar_url || u.user_metadata?.picture || '/anime/kakashi.svg';
+      const avatar = extractUserAvatar(u, 'google');
       return { email, name, avatar };
     }
   } catch (err) {

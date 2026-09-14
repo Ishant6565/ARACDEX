@@ -13,6 +13,7 @@ import {
   signInWithEmailPassword,
   signUpWithEmailPassword,
   syncProfileToCloud,
+  extractUserAvatar,
 } from '../services/supabase';
 import { sound } from '../services/audio';
 import {
@@ -133,7 +134,7 @@ export const GatekeeperLogin: React.FC<GatekeeperLoginProps> = ({ onLoginSuccess
           u?.user_metadata?.full_name ||
           u?.user_metadata?.user_name ||
           email.split('@')[0].toUpperCase();
-        const avatar = u?.user_metadata?.avatar_url || selectedAvatar;
+        const avatar = extractUserAvatar(u, 'custom') || selectedAvatar;
 
         const user = loginWithRealGmail(email, username, avatar);
         syncProfileToCloud(user);
@@ -249,7 +250,13 @@ export const GatekeeperLogin: React.FC<GatekeeperLoginProps> = ({ onLoginSuccess
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-10 h-10 rounded-full border border-cyan-400 overflow-hidden bg-black shrink-0 shadow-[0_0_10px_rgba(6,182,212,0.4)]">
-                        <img src={acc.avatar} alt={acc.username} className="w-full h-full object-cover" />
+                        <img
+                          src={acc.avatar}
+                          alt={acc.username}
+                          referrerPolicy="no-referrer"
+                          onError={(e) => { e.currentTarget.src = acc.provider === 'github' ? '/anime/jinwoo.svg' : '/anime/kakashi.svg'; }}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <div className="text-left min-w-0">
                         <span className="font-display font-bold text-sm text-white group-hover:text-cyan-300 transition-colors truncate block">

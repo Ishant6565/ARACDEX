@@ -46,6 +46,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <img
                   src={currentUser.avatar}
                   alt={currentUser.username}
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    e.currentTarget.src = currentUser.provider === 'github' ? '/anime/jinwoo.svg' : '/anime/kakashi.svg';
+                  }}
                   className="w-full h-full object-cover"
                 />
               </div>

@@ -88,7 +88,13 @@ export const StatsModal: React.FC<StatsModalProps> = ({
           <div className="p-4 border-b border-white/[0.08] flex items-center justify-between bg-[#0e0e0e] shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-[2px] overflow-hidden border border-cyan-400/40 bg-black shrink-0">
-              <img src={currentUser.avatar} alt={currentUser.username} className="w-full h-full object-cover" />
+              <img
+                src={currentUser.avatar}
+                alt={currentUser.username}
+                referrerPolicy="no-referrer"
+                onError={(e) => { e.currentTarget.src = currentUser.provider === 'github' ? '/anime/jinwoo.svg' : '/anime/kakashi.svg'; }}
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="text-left">
               <div className="flex items-center gap-2">
@@ -566,7 +572,13 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                           #{index + 1}
                         </span>
                         <div className="w-9 h-9 rounded-[2px] overflow-hidden border border-white/20 bg-black shrink-0">
-                          <img src={acc.avatar} alt={acc.username} className="w-full h-full object-cover" />
+                          <img
+                            src={acc.avatar}
+                            alt={acc.username}
+                            referrerPolicy="no-referrer"
+                            onError={(e) => { e.currentTarget.src = acc.provider === 'github' ? '/anime/jinwoo.svg' : '/anime/kakashi.svg'; }}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">

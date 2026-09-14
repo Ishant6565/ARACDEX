@@ -14,7 +14,7 @@ import { GameInfo, UserStats, UserProfile } from './types';
 import { loadUserStats, recordGameWin } from './services/storage';
 import { getCurrentUser, hasActiveRealUser, loginWithRealGmail, loginWithOAuthProvider, logoutUser } from './services/auth';
 import { sound } from './services/audio';
-import { supabase, syncLocalWithCloud, closeAuthBrowser, isNativeAPK } from './services/supabase';
+import { supabase, syncLocalWithCloud, closeAuthBrowser, isNativeAPK, extractUserAvatar } from './services/supabase';
 import { App as CapApp } from '@capacitor/app';
 
 export function App() {
@@ -127,7 +127,7 @@ export function App() {
               const provider = (u.app_metadata?.provider || 'google') as 'google' | 'github';
               const email = u.email || `${u.user_metadata?.user_name || 'operator'}@${provider}.com`;
               const name = u.user_metadata?.full_name || u.user_metadata?.user_name || u.user_metadata?.name || email.split('@')[0];
-              const avatar = u.user_metadata?.avatar_url || (provider === 'github' ? '/anime/jinwoo.svg' : '/anime/kakashi.svg');
+              const avatar = extractUserAvatar(u, provider);
               const user = loginWithOAuthProvider(u.id, email, name, avatar, provider);
               setCurrentUser(user);
               setStats(user.stats);
@@ -140,7 +140,7 @@ export function App() {
               const provider = (u.app_metadata?.provider || 'google') as 'google' | 'github';
               const email = u.email || `${u.user_metadata?.user_name || 'operator'}@${provider}.com`;
               const name = u.user_metadata?.full_name || u.user_metadata?.user_name || u.user_metadata?.name || email.split('@')[0];
-              const avatar = u.user_metadata?.avatar_url || (provider === 'github' ? '/anime/jinwoo.svg' : '/anime/kakashi.svg');
+              const avatar = extractUserAvatar(u, provider);
               const user = loginWithOAuthProvider(u.id, email, name, avatar, provider);
               setCurrentUser(user);
               setStats(user.stats);
@@ -180,7 +180,7 @@ export function App() {
         const provider = (u.app_metadata?.provider || 'google') as 'google' | 'github';
         const email = u.email || `${u.user_metadata?.user_name || u.user_metadata?.preferred_username || 'operator'}@${provider}.com`;
         const name = u.user_metadata?.full_name || u.user_metadata?.user_name || u.user_metadata?.name || email.split('@')[0];
-        const avatar = u.user_metadata?.avatar_url || (provider === 'github' ? '/anime/jinwoo.svg' : '/anime/kakashi.svg');
+        const avatar = extractUserAvatar(u, provider);
         const user = loginWithOAuthProvider(u.id, email, name, avatar, provider);
         setCurrentUser(user);
         setStats(user.stats);
@@ -197,7 +197,7 @@ export function App() {
         const provider = (u.app_metadata?.provider || 'google') as 'google' | 'github';
         const email = u.email || `${u.user_metadata?.user_name || u.user_metadata?.preferred_username || 'operator'}@${provider}.com`;
         const name = u.user_metadata?.full_name || u.user_metadata?.user_name || u.user_metadata?.name || email.split('@')[0];
-        const avatar = u.user_metadata?.avatar_url || (provider === 'github' ? '/anime/jinwoo.svg' : '/anime/kakashi.svg');
+        const avatar = extractUserAvatar(u, provider);
         const user = loginWithOAuthProvider(u.id, email, name, avatar, provider);
         setCurrentUser(user);
         setStats(user.stats);
