@@ -3,27 +3,34 @@ import { UserProfile, UserStats, ActivityRecord } from '../types';
 const ACCOUNTS_KEY = 'arcadex_registered_accounts';
 const CURRENT_USER_KEY = 'arcadex_active_user_id';
 
-export const INITIAL_GUEST_STATS: UserStats = {
-  streak: 0,
-  lastPlayedDate: '',
-  totalSolved: 0,
-  totalTimeMinutes: 0,
-  accuracyRate: 100,
-  arcadeRank: 'BEGINNER // NOVICE',
-  scores: {},
-  activeDays: [],
-};
+export function createFreshStats(): UserStats {
+  return {
+    streak: 0,
+    lastPlayedDate: '',
+    totalSolved: 0,
+    totalTimeMinutes: 0,
+    accuracyRate: 100,
+    arcadeRank: 'BEGINNER // NOVICE',
+    scores: {},
+    levels: {},
+    activeDays: [],
+  };
+}
 
-const DEFAULT_GUEST_USER: UserProfile = {
-  id: 'guest_primary',
-  username: 'GMAIL OPERATOR',
-  email: '',
-  avatar: '/anime/kakashi.svg',
-  provider: 'guest',
-  createdAt: new Date().toISOString(),
-  stats: { ...INITIAL_GUEST_STATS },
-  recentActivity: [],
-};
+export const INITIAL_GUEST_STATS: UserStats = createFreshStats();
+
+export function createDefaultGuestUser(): UserProfile {
+  return {
+    id: 'guest_primary',
+    username: 'OPERATOR',
+    email: '',
+    avatar: '/anime/kakashi.svg',
+    provider: 'guest',
+    createdAt: new Date().toISOString(),
+    stats: createFreshStats(),
+    recentActivity: [],
+  };
+}
 
 export const AVAILABLE_AVATARS = [
   { id: 'kakashi', name: 'Kakashi Hatake', src: '/anime/kakashi.svg', anime: 'Naruto' },
@@ -51,17 +58,31 @@ export const AVAILABLE_AVATARS = [
 ];
 
 export function getAllAccounts(): Record<string, UserProfile> {
-  if (typeof window === 'undefined') return { [DEFAULT_GUEST_USER.id]: DEFAULT_GUEST_USER };
+  if (typeof window === 'undefined') {
+    const guest = createDefaultGuestUser();
+    return { [guest.id]: guest };
+  }
   try {
     const raw = localStorage.getItem(ACCOUNTS_KEY);
     if (!raw) {
-      const initial = { [DEFAULT_GUEST_USER.id]: DEFAULT_GUEST_USER };
+      const guest = createDefaultGuestUser();
+      const initial = { [guest.id]: guest };
       localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(initial));
       return initial;
     }
-    const accounts: Record<string, UserProfile> = JSON.parse(raw);
-    
-    // If real accounts exist, prune the temporary guest account
+    const accounts: Record<string, UserProfile> = JSON.parse(raw) || {};
+
+    // Ensure every loaded account has safe initialized stats objects
+    for (const id of Object.keys(accounts)) {
+      if (!accounts[id].stats) {
+        accounts[id].stats = createFreshStats();
+      } else {
+        if (!accounts[id].stats.levels) accounts[id].stats.levels = {};
+        if (!accounts[id].stats.scores) accounts[id].stats.scores = {};
+      }
+    }
+
+    // If real accounts exist, remove the temporary guest placeholder
     const nonGuestKeys = Object.keys(accounts).filter(k => k !== 'guest_primary');
     if (nonGuestKeys.length > 0 && accounts['guest_primary']) {
       delete accounts['guest_primary'];
@@ -70,7 +91,8 @@ export function getAllAccounts(): Record<string, UserProfile> {
 
     return accounts;
   } catch {
-    return { [DEFAULT_GUEST_USER.id]: DEFAULT_GUEST_USER };
+    const guest = createDefaultGuestUser();
+    return { [guest.id]: guest };
   }
 }
 
@@ -82,11 +104,11 @@ export function saveAccounts(accounts: Record<string, UserProfile>): void {
 }
 
 export function getCurrentUser(): UserProfile {
-  if (typeof window === 'undefined') return DEFAULT_GUEST_USER;
+  if (typeof window === 'undefined') return createDefaultGuestUser();
   const accounts = getAllAccounts();
-  const currentId = localStorage.getItem(CURRENT_USER_KEY) || DEFAULT_GUEST_USER.id;
+  const currentId = localStorage.getItem(CURRENT_USER_KEY);
   
-  if (accounts[currentId]) {
+  if (currentId && accounts[currentId]) {
     return accounts[currentId];
   }
   
@@ -103,14 +125,15 @@ export function getCurrentUser(): UserProfile {
     return accounts[firstId];
   }
 
-  accounts[DEFAULT_GUEST_USER.id] = DEFAULT_GUEST_USER;
+  const freshGuest = createDefaultGuestUser();
+  accounts[freshGuest.id] = freshGuest;
   saveAccounts(accounts);
-  localStorage.setItem(CURRENT_USER_KEY, DEFAULT_GUEST_USER.id);
-  return DEFAULT_GUEST_USER;
+  localStorage.setItem(CURRENT_USER_KEY, freshGuest.id);
+  return freshGuest;
 }
 
 export function setCurrentUserId(userId: string): UserProfile {
-  if (typeof window === 'undefined') return DEFAULT_GUEST_USER;
+  if (typeof window === 'undefined') return createDefaultGuestUser();
   localStorage.setItem(CURRENT_USER_KEY, userId);
   return getCurrentUser();
 }
@@ -121,19 +144,47 @@ export function hasActiveRealUser(): boolean {
   return Boolean(current && current.id !== 'guest_primary' && current.email && current.email.includes('@'));
 }
 
+export function getSavedRealAccounts(): UserProfile[] {
+  const accounts = getAllAccounts();
+  return Object.values(accounts).filter(
+    a => a.id !== 'guest_primary' && Boolean(a.email && a.email.includes('@'))
+  );
+}
+
+/**
+ * Logout the CURRENT session without destroying other saved user accounts on this device.
+ */
 export function logoutUser(): void {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.removeItem(ACCOUNTS_KEY);
     localStorage.removeItem(CURRENT_USER_KEY);
-    localStorage.removeItem('arcadex_stats');
+    // Note: We deliberately preserve ACCOUNTS_KEY so the user's progress is not destroyed!
   } catch (err) {
     console.error('Logout error:', err);
   }
 }
 
 /**
+ * Permanently remove a specific user profile if requested
+ */
+export function deleteAccount(userId: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const accounts = getAllAccounts();
+    delete accounts[userId];
+    saveAccounts(accounts);
+    const currentId = localStorage.getItem(CURRENT_USER_KEY);
+    if (currentId === userId) {
+      localStorage.removeItem(CURRENT_USER_KEY);
+    }
+  } catch (err) {
+    console.error('Delete account error:', err);
+  }
+}
+
+/**
  * Real Gmail Sign In: registers / switches to user's verified Gmail account
+ * Every new user receives their own clean, isolated game progress starting from Level 1!
  */
 export function loginWithRealGmail(email: string, callsign?: string, customAvatar?: string): UserProfile {
   const accounts = getAllAccounts();
@@ -149,17 +200,18 @@ export function loginWithRealGmail(email: string, callsign?: string, customAvata
 
   const userId = `gmail_${cleanEmail.replace(/[^a-z0-9]/g, '_')}`;
 
-  // Preserve existing guest stats if migrating first time
-  const guestUser = accounts['guest_primary'];
-  const inheritedStats = guestUser ? { ...guestUser.stats } : { ...INITIAL_GUEST_STATS };
-
   if (accounts[userId]) {
-    // Existing user: update name/avatar if changed and switch
+    // Existing user: update name/avatar if changed and switch to their saved database
     accounts[userId] = {
       ...accounts[userId],
       username: derivedName || accounts[userId].username,
       avatar: customAvatar || accounts[userId].avatar,
       email: cleanEmail,
+      stats: {
+        ...accounts[userId].stats,
+        levels: accounts[userId].stats.levels || {},
+        scores: accounts[userId].stats.scores || {},
+      }
     };
     delete accounts['guest_primary'];
     saveAccounts(accounts);
@@ -167,7 +219,7 @@ export function loginWithRealGmail(email: string, callsign?: string, customAvata
     return accounts[userId];
   }
 
-  // Create real Gmail account profile
+  // BRAND NEW USER: Always initialize pure, independent stats starting at Level 1
   const newProfile: UserProfile = {
     id: userId,
     username: derivedName,
@@ -175,8 +227,8 @@ export function loginWithRealGmail(email: string, callsign?: string, customAvata
     avatar: customAvatar || '/anime/kakashi.svg',
     provider: 'google',
     createdAt: new Date().toISOString(),
-    stats: inheritedStats,
-    recentActivity: guestUser?.recentActivity || [],
+    stats: createFreshStats(),
+    recentActivity: [],
   };
 
   delete accounts['guest_primary'];
@@ -197,15 +249,17 @@ export function loginWithGitHubAccount(usernameOrEmail: string, displayName?: st
   const name = displayName?.trim() ? displayName.trim().toUpperCase() : cleanInput.toUpperCase();
   const userId = `github_${cleanInput.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
 
-  const guestUser = accounts['guest_primary'];
-  const inheritedStats = guestUser ? { ...guestUser.stats } : { ...INITIAL_GUEST_STATS };
-
   if (accounts[userId]) {
     accounts[userId] = {
       ...accounts[userId],
       username: name || accounts[userId].username,
       avatar: avatarUrl || accounts[userId].avatar,
       email: email,
+      stats: {
+        ...accounts[userId].stats,
+        levels: accounts[userId].stats.levels || {},
+        scores: accounts[userId].stats.scores || {},
+      }
     };
     delete accounts['guest_primary'];
     saveAccounts(accounts);
@@ -213,6 +267,7 @@ export function loginWithGitHubAccount(usernameOrEmail: string, displayName?: st
     return accounts[userId];
   }
 
+  // BRAND NEW GITHUB USER: fresh isolated stats starting at Level 1
   const newProfile: UserProfile = {
     id: userId,
     username: name,
@@ -220,8 +275,8 @@ export function loginWithGitHubAccount(usernameOrEmail: string, displayName?: st
     avatar: avatarUrl || '/anime/jinwoo.svg',
     provider: 'github',
     createdAt: new Date().toISOString(),
-    stats: inheritedStats,
-    recentActivity: guestUser?.recentActivity || [],
+    stats: createFreshStats(),
+    recentActivity: [],
   };
 
   delete accounts['guest_primary'];
@@ -256,7 +311,7 @@ export function registerCustomUser(username: string, email: string, avatar: stri
     avatar: avatar || '/anime/luffy.svg',
     provider: 'custom',
     createdAt: new Date().toISOString(),
-    stats: { ...INITIAL_GUEST_STATS },
+    stats: createFreshStats(),
     recentActivity: [],
   };
 

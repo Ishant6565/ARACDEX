@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { sound } from '../services/audio';
 import { haptics } from '../services/haptics';
-import { recordGameWin, getGameLevel, setGameLevel } from '../services/storage';
+import { recordGameWin, getGameLevel, setGameLevel, getGameScore } from '../services/storage';
 import { RotateCcw, Play, Pause, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Layers, Trophy, CheckCircle } from 'lucide-react';
 
 const GRID_SIZE = 20;
@@ -29,9 +29,7 @@ export const SnakeGame: React.FC<{ onComplete?: (score: number) => void }> = ({ 
   const [showLevelPicker, setShowLevelPicker] = useState<boolean>(false);
   const [levelClearedMessage, setLevelClearedMessage] = useState<boolean>(false);
 
-  const [bestScore, setBestScore] = useState<number>(() => {
-    return Number(localStorage.getItem('arcadex_best_snake') || '0');
-  });
+  const [bestScore, setBestScore] = useState<number>(() => getGameScore('snake'));
 
   const dirRef = useRef<Direction>(direction);
   dirRef.current = direction;
@@ -130,7 +128,6 @@ export const SnakeGame: React.FC<{ onComplete?: (score: number) => void }> = ({ 
 
           if (newScore > bestScore) {
             setBestScore(newScore);
-            localStorage.setItem('arcadex_best_snake', String(newScore));
           }
 
           setFood(generateFood(newSnake));

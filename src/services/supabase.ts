@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { Capacitor } from '@capacitor/core';
 import { UserProfile, UserStats } from '../types';
 
 export const SUPABASE_URL = 'https://tyknltahtunelubmjiub.supabase.co';
@@ -11,11 +12,20 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   },
 });
 
+export function isNativeAPK(): boolean {
+  return typeof window !== 'undefined' && Capacitor.isNativePlatform();
+}
+
 /**
- * Genuine Google OAuth through Supabase -> accounts.google.com
+ * Google Sign In through Supabase
+ * In native Android APK, standard WebView OAuth is blocked by Google policy (Error 403: disallowed_useragent).
+ * We report isNativeAPK so the UI can activate instant Direct Google Account access.
  */
-export async function signInWithRealGoogle(): Promise<{ error: any }> {
+export async function signInWithRealGoogle(): Promise<{ error: any; isNative?: boolean }> {
   try {
+    if (isNativeAPK()) {
+      return { error: null, isNative: true };
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -29,10 +39,13 @@ export async function signInWithRealGoogle(): Promise<{ error: any }> {
 }
 
 /**
- * Genuine GitHub OAuth through Supabase -> github.com
+ * GitHub Sign In through Supabase
  */
-export async function signInWithGitHub(): Promise<{ error: any }> {
+export async function signInWithGitHub(): Promise<{ error: any; isNative?: boolean }> {
   try {
+    if (isNativeAPK()) {
+      return { error: null, isNative: true };
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {

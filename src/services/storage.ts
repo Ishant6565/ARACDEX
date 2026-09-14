@@ -92,10 +92,18 @@ export function saveUserStats(stats: UserStats): void {
 
 export function getGameLevel(gameId: string): number {
   const stats = loadUserStats();
-  if (stats.levels && stats.levels[gameId]) {
+  if (stats.levels && stats.levels[gameId] && stats.levels[gameId] >= 1) {
     return stats.levels[gameId];
   }
   return 1;
+}
+
+export function getGameScore(gameId: string): number {
+  const stats = loadUserStats();
+  if (stats.scores && typeof stats.scores[gameId] === 'number') {
+    return stats.scores[gameId];
+  }
+  return 0;
 }
 
 export function setGameLevel(gameId: string, level: number): void {

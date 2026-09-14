@@ -207,6 +207,7 @@ export function App() {
           {/* Active Game Modal */}
           {activeGame && (
             <GameModal
+              key={`${currentUser.id}_${activeGame.id}`}
               game={activeGame}
               onClose={handleCloseGame}
               onGameComplete={handleGameComplete}

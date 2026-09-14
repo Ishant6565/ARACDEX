@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { sound } from '../services/audio';
-import { recordGameWin, getGameLevel, setGameLevel } from '../services/storage';
+import { recordGameWin, getGameLevel, setGameLevel, getGameScore } from '../services/storage';
 import { RotateCcw, Award, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Zap, Sparkles, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
 
 type Board = number[][];
@@ -47,9 +47,7 @@ export const Game2048: React.FC<{ onComplete?: (score: number) => void }> = ({ o
   const [prevBoard, setPrevBoard] = useState<Board | null>(null);
   const [score, setScore] = useState<number>(0);
   const [prevScore, setPrevScore] = useState<number>(0);
-  const [bestScore, setBestScore] = useState<number>(() => {
-    return Number(localStorage.getItem('arcadex_best_2048') || '0');
-  });
+  const [bestScore, setBestScore] = useState<number>(() => getGameScore('2048'));
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [won, setWon] = useState<boolean>(false);
   const [lastGain, setLastGain] = useState<{ amount: number; key: number } | null>(null);
@@ -170,7 +168,6 @@ export const Game2048: React.FC<{ onComplete?: (score: number) => void }> = ({ o
 
       if (updatedScore > bestScore) {
         setBestScore(updatedScore);
-        localStorage.setItem('arcadex_best_2048', String(updatedScore));
       }
 
       // Check level target reach

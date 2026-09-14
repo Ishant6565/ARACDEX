@@ -5,10 +5,11 @@ import {
   getAllAccounts,
   loginWithRealGmail,
   switchAccount,
+  logoutUser,
   AVAILABLE_AVATARS,
 } from '../services/auth';
 import { sound } from '../services/audio';
-import { signInWithRealGoogle, signInWithGitHub, syncProfileToCloud } from '../services/supabase';
+import { signInWithRealGoogle, signInWithGitHub, syncProfileToCloud, isNativeAPK } from '../services/supabase';
 import { X, Users, Mail, Flame, CheckCircle2, AlertCircle, ShieldCheck, UserCheck, LogOut } from 'lucide-react';
 
 interface AuthModalProps {
@@ -201,14 +202,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           if (onLogout) {
                             onLogout();
                           } else {
-                            localStorage.removeItem('arcadex_accounts');
-                            localStorage.removeItem('arcadex_current_user');
+                            logoutUser();
                             window.location.reload();
                           }
                         }}
                         className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 hover:border-rose-400/60 rounded text-[10px] font-mono text-rose-400 hover:text-rose-300 flex items-center gap-1.5 uppercase transition-all cursor-pointer shadow-sm active:scale-95"
                       >
-                        <LogOut className="w-3 h-3" /> LOGOUT & RESET ID
+                        <LogOut className="w-3 h-3" /> LOGOUT SESSION
                       </button>
                     </div>
                   </div>
@@ -221,11 +221,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     disabled={isSubmitting}
                     onClick={async () => {
                       sound.playClick();
-                      setIsSubmitting(true);
                       setErrorMessage('');
+                      if (isNativeAPK()) {
+                        const inputEl = document.getElementById('auth-modal-gmail-input');
+                        inputEl?.focus();
+                        return;
+                      }
+                      setIsSubmitting(true);
                       const { error } = await signInWithRealGoogle();
                       if (error) {
-                        setErrorMessage(error.message || 'Google OAuth failed');
                         setIsSubmitting(false);
                       }
                     }}
@@ -245,11 +249,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     disabled={isSubmitting}
                     onClick={async () => {
                       sound.playClick();
-                      setIsSubmitting(true);
                       setErrorMessage('');
+                      if (isNativeAPK()) {
+                        const inputEl = document.getElementById('auth-modal-gmail-input');
+                        inputEl?.focus();
+                        return;
+                      }
+                      setIsSubmitting(true);
                       const { error } = await signInWithGitHub();
                       if (error) {
-                        setErrorMessage(error.message || 'GitHub OAuth failed');
                         setIsSubmitting(false);
                       }
                     }}
@@ -264,7 +272,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                 <div className="flex items-center gap-3 my-2 font-mono text-[9px] text-zinc-500">
                   <div className="flex-1 h-[1px] bg-white/[0.08]" />
-                  <span>OR DIRECT GMAIL ACCESS</span>
+                  <span>OR DIRECT OPERATOR ACCESS</span>
                   <div className="flex-1 h-[1px] bg-white/[0.08]" />
                 </div>
 
@@ -299,6 +307,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </label>
                     <div className="relative">
                       <input
+                        id="auth-modal-gmail-input"
                         type="email"
                         required
                         value={gmailInput}
